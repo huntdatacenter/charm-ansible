@@ -9,6 +9,6 @@
 
 options:
   thing:
-    default: 🎁
+    default: test
     description: A thing used by the charm.
     type: string
