@@ -14,6 +14,7 @@ develop a new k8s charm using the Operator Framework:
 
 import logging
 
+from yaml import safe_load
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
@@ -30,40 +31,39 @@ class AnsibleCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
-        self.framework.observe(self.on.fortune_action, self._on_fortune_action)
+        # self.framework.observe(self.on.fortune_action, self._on_fortune_action)
+        self.framework.observe(self.on.install, self._on_install)
+        self.framework.observe(self.on.start, self._on_start)
+        self.framework.observe(self.on.stop, self._on_stop)
+        self.framework.observe(self.on.remove, self._on_stop)
         self._stored.set_default(things=[])
 
-    def _on_config_changed(self, _):
-        """Just an example to show how to deal with changed configuration.
+    def _on_config_changed(self, event):
+        playbook = self.config.get('playbook')
+        with open('playbook.yaml', 'w') as f:
+            f.write(playbook)
 
-        TEMPLATE-TODO: change this example to suit your needs.
-        If you don't need to handle config, you can remove this method,
-        the hook created in __init__.py for it, the corresponding test,
-        and the config.py file.
+    def _on_install(self, event):
+        pass 
 
-        Learn more about config at https://juju.is/docs/sdk/config
-        """
-        current = self.config["thing"]
-        if current not in self._stored.things:
-            logger.debug("found a new thing: %r", current)
-            self._stored.things.append(current)
+    def _on_start(self, event):
+        pass
 
-    def _on_fortune_action(self, event):
-        """Just an example to show how to receive actions.
+    def _on_stop(self, event):
+        pass
 
-        TEMPLATE-TODO: change this example to suit your needs.
-        If you don't need to handle actions, you can remove this method,
-        the hook created in __init__.py for it, the corresponding test,
-        and the actions.py file.
+    # def _on_fortune_action(self, event):
+    #     """Just an example to show how to receive actions."""
 
-        Learn more about actions at https://juju.is/docs/sdk/actions
-        """
-        fail = event.params["fail"]
-        if fail:
-            event.fail(fail)
-        else:
-            event.set_results({"fortune": "A bug in the code is worth two in the documentation."})
+    #     fail = event.params["fail"]
+    #     if fail:
+    #         event.fail(fail)
+    #     else:
+    #         event.set_results({"fortune": "A bug in the code is worth two in the documentation."})
 
+    
 
 if __name__ == "__main__":
     main(AnsibleCharm)
+
+

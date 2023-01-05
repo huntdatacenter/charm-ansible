@@ -7,10 +7,17 @@
 #
 # Learn more about actions at: https://juju.is/docs/sdk/actions
 
-fortune:
-  description: Returns a pithy phrase.
-  params:
-    fail:
-      description: "Fail with this message"
-      type: string
-      default: ""
+# https://juju.is/docs/sdk/actions
+# service-upgrade:
+#   description: Upgrade Docker service.
+#   params:
+#     name:
+#       description: "Service name"
+#       type: string
+#     image:
+#       description: "Service image"
+#       type: string
+#   required:
+#     - name
+#     - image
+

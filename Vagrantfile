@@ -2,7 +2,7 @@ Vagrant.configure(2) do |config|
   # Development box
   config.vm.define "jujubox" do |dev|
     # Select the box
-    dev.vm.box = "bento/ubuntu-20.04"
+    dev.vm.box = "bento/ubuntu-16.04"
     # Run playbook
     dev.vm.provision "ansible_local" do |ansible|
       ansible.playbook = "vagrant.yaml"
