@@ -1,0 +1,144 @@
+- hosts: all
+  become: yes
+
+  vars:
+    user: vagrant
+    group: vagrant
+    lxd_version: "4.0/stable"
+    juju_version: "2.8/stable"
+    charm_version: "stable"
+    charmcraft_version: "1.x/stable"
+
+  tasks:
+    # - name: Set max map count
+    #   sysctl:
+    #     name: vm.max_map_count
+    #     value: '262144'
+    #     sysctl_set: yes
+    #     reload: yes
+
+    - name: Install packages
+      apt:
+        name:
+          - "zfsutils-linux"
+          - "bash-completion"
+          - "python3"
+          - "overlayroot"
+          - "libssl-dev"
+          - "libffi-dev"
+        state: latest
+
+    - name: Add the overlay module
+      modprobe:
+        name: overlay
+        state: present
+
+    - name: "Install lxd {{ lxd_version }} snap"
+      command: "snap install lxd --channel={{ lxd_version }}"
+      args:
+        creates: /snap/bin/lxd
+
+    - name: "Install juju {{ juju_version }} snap"
+      command: "snap install juju --classic --channel={{ juju_version }}"
+      args:
+        creates: /snap/bin/juju
+
+    - name: Run juju to generate juju dir
+      command: /snap/bin/juju
+      become_user: "{{ user }}"
+      args:
+        creates: ~/.local/share/juju
+
+    - name: Setup lxd
+      command: "{{ item }}"
+      with_items:
+        - lxd init --auto --storage-backend zfs --storage-create-loop 30 --storage-pool lxd
+        #- lxd init --auto --storage-backend btrfs --storage-create-loop 30 --storage-pool lxd
+        - lxc network set lxdbr0 ipv6.address none
+      ignore_errors: yes
+
+    - name: Bootstrap juju controller
+      command: juju bootstrap localhost lxd
+      become: yes
+      become_user: vagrant
+      ignore_errors: yes
+      async: 7200
+      poll: 0
+      register: juju_bootstrap
+
+    - name: Install packages
+      apt:
+        name:
+          - "apt-cacher-ng"
+          - "python3-apt"
+          - "python3-pip"
+          - "python3-testresources"
+        state: latest
+
+    - name: Add `watch-juju` alias and snap path to .bashrc
+      blockinfile:
+        path: "/home/{{ user }}/.bashrc"
+        content: |
+          # Add alias for easy watching of juju status
+          alias watch-juju='watch --color -n1 juju status --color'
+          # Add snaps to path
+          export PATH=/snap/bin:$PATH
+
+    - name: Configure apt-cacher-ng for https
+      lineinfile:
+        path: /etc/apt-cacher-ng/acng.conf
+        line: 'PassThroughPattern: .*'
+
+    - name: Restart apt-cacher-ng
+      service:
+        name: apt-cacher-ng
+        state: restarted
+
+    - name: Add apt proxy to juju config
+      blockinfile:
+        path: "/home/{{ user }}/.local/share/juju/clouds.yaml"
+        owner: "{{ user }}"
+        group: "{{ group }}"
+        mode: 0600
+        create: yes
+        content: |
+          clouds:
+            lxd:
+              type: lxd
+              config:
+                apt-http-proxy: http://{{ ansible_default_ipv4.address }}:3142
+                apt-https-proxy: http://{{ ansible_default_ipv4.address }}:3142
+                enable-os-upgrade: false
+
+    - name: Upgrade pip
+      become: false
+      pip:
+        name: pip
+        executable: pip3
+        extra_args: --upgrade --user
+        # version: '19.3.1'  # xenial
+
+    - name: Install jujuna
+      become: false
+      pip:
+        name: ["jujuna", "tox"]
+        executable: pip3
+        extra_args: --user
+      ignore_errors: yes
+
+    - name: Install charm
+      command: "snap install charm --classic --channel={{ charm_version }}"
+
+    - name: Install charmcraft
+      command: "snap install charmcraft --classic --channel={{ charmcraft_version }}"
+
+    - name: Check on an async juju bootstrap task
+      async_status:
+        jid: "{{ juju_bootstrap.ansible_job_id }}"
+      become: yes
+      become_user: vagrant
+      ignore_errors: yes
+      register: job_result
+      until: job_result.finished
+      delay: 10
+      retries: 720
