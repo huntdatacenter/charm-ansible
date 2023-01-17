@@ -13,7 +13,11 @@ develop a new k8s charm using the Operator Framework:
 """
 
 import logging
+import sys
 
+sys.path.append('lib')
+
+from extensions import ansible
 from yaml import safe_load
 from ops.charm import CharmBase
 from ops.framework import StoredState
@@ -21,6 +25,7 @@ from ops.main import main
 from ops.model import ActiveStatus
 
 logger = logging.getLogger(__name__)
+
 
 
 class AnsibleCharm(CharmBase):
@@ -51,6 +56,22 @@ class AnsibleCharm(CharmBase):
 
     def _on_stop(self, event):
         pass
+    
+    try:
+        ansible.init_charm(self)
+        logger.debug("Ansible extension initiated")
+    except Exception as e:
+        logger.error("Init Ansible failed: {}".format(str(e)))
+
+    try:
+        # Install apt/pip3 dependencies
+        ansible.apply_playbook(
+            playbook='playbook.yml',
+            tags=["install"]
+        )
+    except Exception as e:
+            logger.error("Ansible playbook failed: {}".format((str(e))))
+
 
     # def _on_fortune_action(self, event):
     #     """Just an example to show how to receive actions."""
