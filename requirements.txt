@@ -1,3 +1,5 @@
 ops >= 1.4.0
 
+MarkupSafe
+pyyaml
 ansible
