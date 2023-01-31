@@ -15,7 +15,12 @@ series:
   - bionic
   - focal
   - jammy
-# subordinate: true
+subordinate: true
+
+requires:
+  juju-info:
+    interface: juju-info
+    scope: container
 
 # TEMPLATE-TODO: each container defined above must specify an oci-image resource
 # resources:
