@@ -1,8 +1,17 @@
 # Testing bundles
 
+Run in vagrant to build the charm
+```
+cd /vagrant
+
+charmcraft pack --verbose
+```
+
 Deploy testing bundle
 
 ```
+cd /vagrant/bundles
+
 juju deploy /vagrant/focal.yaml
 
 watch-juju
