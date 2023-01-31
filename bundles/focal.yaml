@@ -12,6 +12,6 @@ applications:
   to:
     - '0'
   cmatrix:
-    charm: /vagrant/
+    charm: /vagrant/ansible_ubuntu-20.04-amd64.charm
     options:
       playbook: "include-file://playbook.yaml"
