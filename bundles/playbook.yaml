@@ -1,0 +1,11 @@
+---
+- name: Run apt update
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
+
+- name: Install cmatrix
+  ansible.builtin.apt:
+    pkgs:
+      - "cmatrix"
+  become: true
