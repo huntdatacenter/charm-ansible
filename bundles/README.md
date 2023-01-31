@@ -12,7 +12,7 @@ Deploy testing bundle
 ```
 cd /vagrant/bundles
 
-juju deploy /vagrant/focal.yaml
+juju deploy /vagrant/bundles/focal.yaml
 
 watch-juju
 ```
