@@ -13,7 +13,7 @@ develop a new k8s charm using the Operator Framework:
 """
 
 
-
+import subprocess
 import logging
 import sys
 
@@ -25,7 +25,7 @@ try:
     # from extensions.network import open_port
     # from extensions.network import parse_port
     # from extensions.network import unit_private_ip
-    
+
 except Exception as e:
     logging.error('Failed to import lib extensions: {}'.format(str(e)))
 
@@ -68,6 +68,10 @@ class AnsibleCharm(CharmBase):
 
     def _on_install(self, event):
         self.unit.status = MaintenanceStatus("Installing")
+
+        subprocess.check_call(["apt", "update"])
+        subprocess.check_call(["apt", "install", "-y", "ansible"])
+
         try:
             ansible.init_charm(self)
             logger.debug("Ansible extension initiated")
@@ -104,7 +108,7 @@ class AnsibleCharm(CharmBase):
             logger.error("Ansible playbook failed: {}".format((str(e))))
         else:
             self.unit.status = ActiveStatus("Unit is ready")
-        
+
 
     def _on_stop(self, event):
         self.unit.status = MaintenanceStatus("Stopping")
@@ -123,7 +127,7 @@ class AnsibleCharm(CharmBase):
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format((str(e))))
 
-    
+
 
 
 
@@ -138,7 +142,7 @@ class AnsibleCharm(CharmBase):
     #     else:
     #         event.set_results({"fortune": "A bug in the code is worth two in the documentation."})
 
-    
+
 
 if __name__ == "__main__":
     main(AnsibleCharm)

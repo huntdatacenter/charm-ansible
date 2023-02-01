@@ -115,8 +115,7 @@ class Ansible():
             logger.info('Ansible PATH: {}'.format(env['PATH']))
         env['PYTHONUNBUFFERED'] = "1"
         call = [
-            'python3',
-            'venv/bin/ansible-playbook',
+            'ansible-playbook',
             '-c',
             'local',
             playbook,
