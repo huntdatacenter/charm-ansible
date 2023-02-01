@@ -81,7 +81,7 @@ class AnsibleCharm(CharmBase):
         try:
             # Install apt/pip3 dependencies
             ansible.apply_playbook(
-                playbook='playbook.yaml',
+                playbook='./playbook.yaml',
                 tags=["install"]
             )
         except Exception as e:
@@ -101,7 +101,7 @@ class AnsibleCharm(CharmBase):
         try:
             # Install apt/pip3 dependencies
             ansible.apply_playbook(
-                playbook='playbook.yaml',
+                playbook='./playbook.yaml',
                 tags=["start"]
             )
         except Exception as e:
@@ -121,7 +121,7 @@ class AnsibleCharm(CharmBase):
         try:
             # Install apt/pip3 dependencies
             ansible.apply_playbook(
-                playbook='playbook.yaml',
+                playbook='./playbook.yaml',
                 tags=["stop"]
             )
         except Exception as e:
