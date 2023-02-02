@@ -13,7 +13,7 @@
 
     - name: Install cmatrix
       ansible.builtin.apt:
-        pkgs:
+        pkg:
           - "cmatrix"
       become: true
       tags:
