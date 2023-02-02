@@ -49,12 +49,16 @@ class Ansible():
         #     charmhelpers.fetch.add_source(ppa_location)
         #     charmhelpers.fetch.apt_update(fatal=True)
         # charmhelpers.fetch.apt_install('ansible')
+
+        subprocess.check_call(["apt-get", "update"])
+        subprocess.check_call(["apt-get", "install", "-y", "ansible"])
         try:
             if '/etc/ansible' in ansible_hosts_path:
                 os.makedirs('/etc/ansible/host_vars', mode=0o755, exist_ok=True)
         except Exception as e:
             logger.warning('install_ansible_support failed to create /etc/ansible: {}'.format(str(e)))
         with open(ansible_hosts_path, 'w+') as hosts_file:
+            hosts_file.write('[all]\n')
             config = ' '.join([
                 'localhost',
                 'ansible_connection=local',

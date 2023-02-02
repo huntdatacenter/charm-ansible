@@ -12,10 +12,18 @@ develop a new k8s charm using the Operator Framework:
     https://discourse.charmhub.io/t/4208
 """
 
-
+import os
+import sys
 import subprocess
 import logging
-import sys
+from yaml import safe_load
+
+from ops.charm import CharmBase
+from ops.framework import StoredState
+from ops.main import main
+from ops.model import ActiveStatus
+#from ops.model import BlockedStatus
+from ops.model import MaintenanceStatus
 
 sys.path.append('lib')
 
@@ -28,15 +36,6 @@ try:
 
 except Exception as e:
     logging.error('Failed to import lib extensions: {}'.format(str(e)))
-
-
-from yaml import safe_load
-from ops.charm import CharmBase
-from ops.framework import StoredState
-from ops.main import main
-from ops.model import ActiveStatus
-#from ops.model import BlockedStatus
-from ops.model import MaintenanceStatus
 
 
 
@@ -69,8 +68,17 @@ class AnsibleCharm(CharmBase):
     def _on_install(self, event):
         self.unit.status = MaintenanceStatus("Installing")
 
-        subprocess.check_call(["apt", "update"])
-        subprocess.check_call(["apt", "install", "-y", "ansible"])
+        playbook = self.config.get('playbook')
+        with open('playbook.yaml', 'w') as f:
+            f.write(playbook)
+
+        subprocess.check_call(["ls", "-la", os.getenv("JUJU_CHARM_DIR")])
+
+        try:
+            ansible.install_ansible_support()
+            logger.debug("Ansible support installed")
+        except Exception as e:
+            logger.error("Installing Ansible support failed: {}".format(str(e)))
 
         try:
             ansible.init_charm(self)
