@@ -2,17 +2,38 @@
 
 # Use one shell for all commands in a target recipe
 .ONESHELL:
-.PHONY: help list launch mount umount bootstrap up down ssh destroy bridge
+.PHONY: help clean build deploy list launch mount umount bootstrap up down ssh destroy bridge
 # Set default goal
 .DEFAULT_GOAL := help
 # Use bash shell in Make instead of sh
 SHELL := /bin/bash
+
+# Charm variables
+CHARM_NAME := ansible.charm
+CHARM_STORE_URL := https://charmhub.io/huntdatacenter-charm-ansible
+CHARM_HOMEPAGE := https://github.com/huntdatacenter/charm-ansible/
+CHARM_BUGS_URL := https://github.com/huntdatacenter/charm-ansible/issues
 
 # Multipass variables
 UBUNTU_VERSION = jammy
 MOUNT_TARGET = /home/ubuntu/vagrant
 DIR_NAME = "$(shell basename $(shell pwd))"
 VM_NAME = juju-dev--$(DIR_NAME)
+
+clean:  ## Remove artifacts
+	rm -vf ansible_ubuntu-20.04-amd64_ubuntu-22.04-amd64.charm
+
+ansible_ubuntu-20.04-amd64_ubuntu-22.04-amd64.charm:
+	tox -e build
+
+rename:
+	mv -v ansible_ubuntu-20.04-amd64_ubuntu-22.04-amd64.charm $(CHARM_NAME)
+
+build: clean ansible_ubuntu-20.04-amd64_ubuntu-22.04-amd64.charm rename  ## Build charm
+
+deploy:  ## Deploy charm
+	juju deploy ./$(CHARM_NAME)
+
 
 name:  ## Print name of the VM
 	echo "$(VM_NAME)"
