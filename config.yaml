@@ -11,6 +11,6 @@ options:
       Ansible playbook file.
       Use yaml file with keys environment and hosts.
       Bundle example: 'include-file://files/playbook.yaml'
-      Command example: juju config appname playbook:=@file.yaml
+      Command example: juju config appname playbook=@playbook.yaml
 
 
