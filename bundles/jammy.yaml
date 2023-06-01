@@ -1,10 +1,10 @@
 machines:
   '0':
-    series: focal
+    series: jammy
 relations:
 - - ubuntu:juju-info
   - cmatrix:juju-info
-series: focal
+series: jammy
 applications:
   ubuntu:
     charm: huntdatacenter-ubuntu-lite

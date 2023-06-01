@@ -1,20 +1,31 @@
 # Testing bundles
 
-Run in vagrant to build the charm
-```
-cd /vagrant
+Start multipass VM
 
-charmcraft pack --verbose
+```
+make up
+```
+
+Build charm
+
+```
+make build
 ```
 
 Deploy testing bundle
 
 ```
-cd /vagrant/bundles
+cd bundles
 
-juju deploy /vagrant/bundles/focal.yaml
+juju deploy ./jammy.yaml
 
 watch-juju
+```
+
+Test if cmatrix got installed
+
+```
+juju ssh cmatrix/0 -- cmatrix
 ```
 
 Checking logs during deploy
