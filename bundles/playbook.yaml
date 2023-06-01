@@ -1,0 +1,21 @@
+- hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: Run apt update
+      ansible.builtin.apt:
+        update_cache: true
+      become: true
+      tags:
+        - install
+        - start
+
+    - name: Install cmatrix
+      ansible.builtin.apt:
+        pkg:
+          - "cmatrix"
+      become: true
+      tags:
+        - install
+        - start

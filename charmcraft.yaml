@@ -1,6 +1,16 @@
 # Learn more about charmcraft.yaml configuration at:
 # https://juju.is/docs/sdk/charmcraft-config
 type: "charm"
+parts:
+  charm:
+    build-packages:
+      - python3-dev
+      - libffi-dev
+      - libssl-dev
+      - rustc
+      - cargo
+    charm-python-packages:
+      - setuptools
 bases:
   - build-on:
     - name: "ubuntu"

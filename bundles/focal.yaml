@@ -1,0 +1,18 @@
+machines:
+  '0':
+    series: focal
+relations:
+- - ubuntu:juju-info
+  - cmatrix:juju-info
+series: focal
+applications:
+  ubuntu:
+    charm: huntdatacenter-ubuntu-lite
+    num_units: 1
+    to:
+    - '0'
+  cmatrix:
+    charm: /vagrant/ansible_ubuntu-20.04-amd64.charm
+    options:
+      playbook: "include-file://playbook.yaml"
+
