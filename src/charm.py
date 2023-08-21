@@ -13,7 +13,6 @@ develop a new k8s charm using the Operator Framework:
 """
 
 import os
-import sys
 import subprocess
 import logging
 # from yaml import safe_load
@@ -25,8 +24,11 @@ from ops.model import ActiveStatus
 # from ops.model import BlockedStatus
 from ops.model import MaintenanceStatus
 
-sys.path.append('lib')
-
+try:
+    import setuppath  # noqa:F401
+except Exception as e:
+    # OK to fail only when build documentation
+    logging.error('Failed to import setuppath: {}'.format(str(e)))
 try:
     from extensions import ansible
     # from extensions.network import close_port
