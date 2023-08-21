@@ -1,7 +1,13 @@
 name: Build charm
 
 on:
-  push: {}
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+      - dev
 
 jobs:
   build:
@@ -12,7 +18,7 @@ jobs:
           - linux/amd64
           # - linux/arm/v7
           # - linux/arm/v8
-          - linux/arm64
+          # - linux/arm64
     steps:
     - name: Check out code
       uses: actions/checkout@v3
@@ -32,3 +38,10 @@ jobs:
     - name: Build charm with charmcraft
       run: |
         charmcraft pack --verbose
+    - name: Upload Charm
+      uses: actions/upload-artifact@v3
+      with:
+        name: ansible-charm
+        path: |
+          ansible_ubuntu-*.charm
+        retention-days: 5
