@@ -2,7 +2,7 @@
 
 # Use one shell for all commands in a target recipe
 .ONESHELL:
-.PHONY: help clean build deploy list launch mount umount bootstrap up down ssh destroy bridge
+.PHONY: help clean rename build deploy list launch mount umount bootstrap up down ssh destroy bridge
 # Set default goal
 .DEFAULT_GOAL := help
 # Use bash shell in Make instead of sh
@@ -21,15 +21,15 @@ DIR_NAME = "$(shell basename $(shell pwd))"
 VM_NAME = juju-dev--$(DIR_NAME)
 
 clean:  ## Remove artifacts
-	rm -vf ansible_ubuntu-20.04-amd64_ubuntu-22.04-amd64.charm
+	rm -vf ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm
 
-ansible_ubuntu-20.04-amd64_ubuntu-22.04-amd64.charm:
+ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm:
 	tox -e build
 
 rename:
-	mv -v ansible_ubuntu-20.04-amd64_ubuntu-22.04-amd64.charm $(CHARM_NAME)
+	mv -v ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm $(CHARM_NAME)
 
-build: clean ansible_ubuntu-20.04-amd64_ubuntu-22.04-amd64.charm rename  ## Build charm
+build: clean ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm rename  ## Build charm
 
 deploy:  ## Deploy charm
 	juju deploy ./$(CHARM_NAME)
