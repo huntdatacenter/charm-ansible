@@ -277,6 +277,9 @@ def dict_keys_without_hyphens(a_dict):
         (key.replace('-', '_'), val) for key, val in a_dict.items())
 
 
+cache = {}
+
+
 def cached(func):
     """Cache return values for multiple executions of func + args
     For example::
