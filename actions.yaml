@@ -1,23 +1,13 @@
-# Copyright 2022 vagrant
+# Copyright 2022 HUNT Cloud
 # See LICENSE file for licensing details.
-#
-# TEMPLATE-TODO: change this example to suit your needs.
-# If you don't need actions, you can remove the file entirely.
-# It ties in to the example _on_fortune_action handler in src/charm.py
 #
 # Learn more about actions at: https://juju.is/docs/sdk/actions
 
-# https://juju.is/docs/sdk/actions
-# service-upgrade:
-#   description: Upgrade Docker service.
-#   params:
-#     name:
-#       description: "Service name"
-#       type: string
-#     image:
-#       description: "Service image"
-#       type: string
-#   required:
-#     - name
-#     - image
-
+ansible-playbook:
+  description: Run ansible playbook
+  params:
+    tags:
+      description: "Execute Tags"
+      type: string
+  required:
+    - tags

@@ -16,13 +16,13 @@ import os
 import sys
 import subprocess
 import logging
-from yaml import safe_load
+# from yaml import safe_load
 
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus
-#from ops.model import BlockedStatus
+# from ops.model import BlockedStatus
 from ops.model import MaintenanceStatus
 
 sys.path.append('lib')
@@ -38,9 +38,7 @@ except Exception as e:
     logging.error('Failed to import lib extensions: {}'.format(str(e)))
 
 
-
 logger = logging.getLogger(__name__)
-
 
 
 class AnsibleCharm(CharmBase):
@@ -97,7 +95,6 @@ class AnsibleCharm(CharmBase):
         else:
             self.unit.status = ActiveStatus("Unit is ready")
 
-
     def _on_start(self, event):
         self.unit.status = MaintenanceStatus("Starting")
         try:
@@ -117,7 +114,6 @@ class AnsibleCharm(CharmBase):
         else:
             self.unit.status = ActiveStatus("Unit is ready")
 
-
     def _on_stop(self, event):
         self.unit.status = MaintenanceStatus("Stopping")
         try:
@@ -135,12 +131,6 @@ class AnsibleCharm(CharmBase):
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format((str(e))))
 
-
-
-
-
-
-
     # def _on_fortune_action(self, event):
     #     """Just an example to show how to receive actions."""
 
@@ -148,11 +138,10 @@ class AnsibleCharm(CharmBase):
     #     if fail:
     #         event.fail(fail)
     #     else:
-    #         event.set_results({"fortune": "A bug in the code is worth two in the documentation."})
-
+    #         event.set_results({
+    #             "fortune": "A bug in the code is worth two in the documentation."
+    #         })
 
 
 if __name__ == "__main__":
     main(AnsibleCharm)
-
-
