@@ -1,0 +1,33 @@
+name: Build charm
+
+on:
+  push: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          # - linux/arm/v7
+          # - linux/arm/v8
+          - linux/arm64
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+    - name: Init LXD
+      run: |
+        set -euxo pipefail
+        sudo lxd init --auto
+        # This is a throw-away CI environment, do not do this at home
+        sudo chmod 666 /var/snap/lxd/common/lxd/unix.socket
+        # Fixup iptables forwarding issues from LXD containers with a flush and
+        # re-create of rules.
+        sudo iptables -F FORWARD
+        sudo iptables -P FORWARD ACCEPT
+    - name: Build reactive charm with charmcraft
+      run: |
+        set -euxo pipefail
+        sudo snap install --classic --channel latest/stable charmcraft
+        charmcraft pack -v
