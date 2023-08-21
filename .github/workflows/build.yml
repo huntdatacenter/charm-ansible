@@ -1,7 +1,13 @@
 name: Build charm
 
 on:
-  push: {}
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+      - dev
 
 jobs:
   build:
