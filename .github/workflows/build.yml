@@ -32,3 +32,10 @@ jobs:
     - name: Build charm with charmcraft
       run: |
         charmcraft pack --verbose
+    - name: Upload Charm
+      uses: actions/upload-artifact@v3
+      with:
+        name: ansible-charm
+        path: |
+          ansible_ubuntu-*.charm
+        retention-days: 5
