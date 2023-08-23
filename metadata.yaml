@@ -1,4 +1,4 @@
-# Copyright 2022 Jakub Hudak
+# Copyright 2022 HUNT Cloud
 # See LICENSE file for licensing details.
 
 # For a complete list of supported options, see:
@@ -12,9 +12,6 @@ summary: |
   Ansible subordinate charm executes preconfigured ansible playbook
   to handle minor details that are out of scope of superior charm.
 
-series:
-  - focal
-  - jammy
 subordinate: true
 
 requires:
