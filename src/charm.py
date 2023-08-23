@@ -137,14 +137,15 @@ class AnsibleCharm(CharmBase):
 
         tags = event.params["tags"]
         try:
-            if event.params["extra_vars"]:
-                extra_vars = json.loads(event.params["extra_vars"])
+            if event.params.get("extra"):
+                extra_vars = json.loads(event.params["extra"])
             else:
-                extra_vars = None
+                extra_vars = {}
         except Exception as e:
             logger.error(e)
-            event.log("Failed to process extra_vars: {}".format(str(e)))
-            event.fail("Failed to process extra_vars: {}".format(str(e)))
+            event.log("Failed to process parameter - 'extra': {}".format(str(e)))
+            event.fail("Failed to process parameter - 'extra': {}".format(str(e)))
+            return
         try:
             ansible.init_charm(self)
             logger.debug("Ansible extension initiated")
@@ -152,6 +153,7 @@ class AnsibleCharm(CharmBase):
             logger.error(e)
             event.log("Init Ansible failed: {}".format(str(e)))
             event.fail("Init Ansible failed: {}".format(str(e)))
+            return
 
         try:
             returncode, results = ansible.apply_playbook(
@@ -167,6 +169,7 @@ class AnsibleCharm(CharmBase):
             logger.error(e)
             event.log("Ansible playbook failed: {}".format(str(e)))
             event.fail("Ansible playbook failed: {}".format(str(e)))
+            return
         else:
             event.set_results({
                 "returncode": returncode,
