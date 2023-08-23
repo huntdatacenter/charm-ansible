@@ -38,6 +38,15 @@ See `actions.yaml`.
 juju list-actions "${app_name}"
 ```
 
+## Storage
+
+Test adding storage
+
+```
+size=2G
+juju add-storage "${unit_name}" "data=${size}"
+```
+
 ## Development
 
 To start development environment in Multipass run:
