@@ -4,10 +4,13 @@ Ansible Playbook runner
 
 .. code-block:: python
 
-    from risieve.extensions.ansible_playbook import AnsiblePlaybook
+    from .ansible_playbook import Ansible, AnsiblePlaybook
 
-    pb = AnsiblePlaybook(inventory_path=None, basedir=None)
-    pb.run('playbook.yaml', lab='demolab', extra={})
+    ansible = Ansible()
+    ansible.install_ansible_support()
+    ansible.init_charm(charm)
+
+    ansible.apply_playbook('playbook.yaml', tags=['install'], extra_vars={})
 
 """
 

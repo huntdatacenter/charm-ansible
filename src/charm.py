@@ -52,13 +52,13 @@ class AnsibleCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
-        self.framework.observe(self.on.ansible_playbook, self._on_ansible_playbook)
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.start, self._on_start)
         self.framework.observe(self.on.stop, self._on_stop)
         self.framework.observe(self.on.remove, self._on_stop)
         self.framework.observe(self.on.upgrade_charm, self._on_install)
         self.framework.observe(self.on.post_series_upgrade, self._on_install)
+        self.framework.observe(self.on.ansible_playbook_action, self._on_ansible_playbook_action)
         self._stored.set_default(things=[])
 
     def _on_config_changed(self, event):
@@ -94,7 +94,7 @@ class AnsibleCharm(CharmBase):
                 tags=["install"]
             )
         except Exception as e:
-            logger.error("Ansible playbook failed: {}".format((str(e))))
+            logger.error("Ansible playbook failed: {}".format(str(e)))
         else:
             self.unit.status = ActiveStatus("Unit is ready")
 
@@ -112,7 +112,7 @@ class AnsibleCharm(CharmBase):
                 tags=["start"]
             )
         except Exception as e:
-            logger.error("Ansible playbook failed: {}".format((str(e))))
+            logger.error("Ansible playbook failed: {}".format(str(e)))
         else:
             self.unit.status = ActiveStatus("Unit is ready")
 
@@ -130,9 +130,9 @@ class AnsibleCharm(CharmBase):
                 tags=["stop"]
             )
         except Exception as e:
-            logger.error("Ansible playbook failed: {}".format((str(e))))
+            logger.error("Ansible playbook failed: {}".format(str(e)))
 
-    def _on_ansible_playbook(self, event):
+    def _on_ansible_playbook_action(self, event):
         """Run ansible playbook."""
 
         tags = event.params["tags"]
@@ -143,14 +143,14 @@ class AnsibleCharm(CharmBase):
                 extra_vars = None
         except Exception as e:
             logger.error(e)
-            logger.error("Failed to process extra_vars: {}".format(str(e)))
+            event.log("Failed to process extra_vars: {}".format(str(e)))
             event.fail("Failed to process extra_vars: {}".format(str(e)))
         try:
             ansible.init_charm(self)
             logger.debug("Ansible extension initiated")
         except Exception as e:
             logger.error(e)
-            logger.error("Init Ansible failed: {}".format(str(e)))
+            event.log("Init Ansible failed: {}".format(str(e)))
             event.fail("Init Ansible failed: {}".format(str(e)))
 
         try:
@@ -165,8 +165,8 @@ class AnsibleCharm(CharmBase):
             )
         except Exception as e:
             logger.error(e)
-            logger.error("Ansible playbook failed: {}".format((str(e))))
-            event.fail("Ansible playbook failed: {}".format((str(e))))
+            event.log("Ansible playbook failed: {}".format(str(e)))
+            event.fail("Ansible playbook failed: {}".format(str(e)))
         else:
             event.set_results({
                 "returncode": returncode,
