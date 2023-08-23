@@ -18,21 +18,30 @@ applications:
         - hosts: localhost
           connection: local
           become: true
-
           tasks:
             - name: Run apt update
               ansible.builtin.apt:
                 update_cache: true
               become: true
               tags:
+                - never
                 - install
                 - start
-
             - name: Install cmatrix
               ansible.builtin.apt:
-                pkg:
+                name:
                   - "cmatrix"
               become: true
               tags:
+                - never
                 - install
                 - start
+            - name: Remove cmatrix
+              ansible.builtin.apt:
+                name:
+                  - "cmatrix"
+                state: absent
+              become: true
+              tags:
+                - never
+                - stop
