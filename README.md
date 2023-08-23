@@ -1,7 +1,7 @@
 # charm-ansible
 
 Ansible subordinate charm executes preconfigured ansible playbook
-  to handle minor details that are out of scope of superior charm.
+to handle minor details that are out of scope of superior charm.
 
 ## Deploy
 
@@ -10,19 +10,42 @@ See the example in `bundles` directory.
 Simple way to deploy playbook as a charm:
 
 ```
-juju deploy huntdatacenter-charm-ansible --config playbook=@playbook.yaml
+juju deploy huntdatacenter-ansible "${app_name}" --config playbook=@playbook.yaml
+juju integrate "${app_name}:juju-info" "${superior_app}:juju-info"
 ```
 
 ## Ansible playbook
 
 Playbook should use tags matching charm hooks:
 - `install`
-- `start` (called after installation)
-- `stop` (called before removal)
+- `start` (called after installation - start hook)
+- `stop` (called before removal - stop hook)
+- `config` (called after config changes - config-changed hook)
 
 ## Configuration
 
 See `config.yaml`.
+
+```
+juju config "${app_name}"
+```
+
+## Actions
+
+See `actions.yaml`.
+
+```
+juju list-actions "${app_name}"
+```
+
+## Storage
+
+Test adding storage
+
+```
+size=2G
+juju add-storage "${unit_name}" "data=${size}"
+```
 
 ## Development
 
