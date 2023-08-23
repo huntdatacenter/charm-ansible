@@ -1,5 +1,8 @@
 ops >= 1.4.0
 
 MarkupSafe
+
+ansible>=7.0.0,<9.0.0; python_version >= '3.9'
+ansible>=5.0.0,<7.0.0; python_version == '3.8'
+ansible>=4.0.0,<5.0.0; python_version < '3.8'
 pyyaml
-ansible

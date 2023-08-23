@@ -34,7 +34,7 @@ jobs:
         sudo iptables -P FORWARD ACCEPT
     - name: Install charmcraft snap
       run: |
-        sudo snap install charmcraft --classic --channel=latest/stable
+        sudo snap install charmcraft --classic --channel=2.x/stable
     - name: Build charm with charmcraft
       run: |
         charmcraft pack --verbose

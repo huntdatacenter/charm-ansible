@@ -1,0 +1,47 @@
+machines:
+  '0':
+    series: jammy
+relations:
+- - ubuntu:juju-info
+  - cmatrix:juju-info
+series: jammy
+applications:
+  ubuntu:
+    charm: huntdatacenter-ubuntu-lite
+    num_units: 1
+    to:
+    - '0'
+  cmatrix:
+    charm: huntdatacenter-ansible
+    options:
+      playbook: |
+        - hosts: localhost
+          connection: local
+          become: true
+          tasks:
+            - name: Run apt update
+              ansible.builtin.apt:
+                update_cache: true
+              become: true
+              tags:
+                - never
+                - install
+                - start
+            - name: Install cmatrix
+              ansible.builtin.apt:
+                name:
+                  - "cmatrix"
+              become: true
+              tags:
+                - never
+                - install
+                - start
+            - name: Remove cmatrix
+              ansible.builtin.apt:
+                name:
+                  - "cmatrix"
+                state: absent
+              become: true
+              tags:
+                - never
+                - stop

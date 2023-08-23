@@ -9,5 +9,8 @@ ansible-playbook:
     tags:
       description: "Execute Tags"
       type: string
+    extra:
+      description: "Json encoded string with extra variables for playbook"
+      type: string
   required:
     - tags
