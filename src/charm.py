@@ -64,6 +64,19 @@ class AnsibleCharm(CharmBase):
     def _on_config_changed(self, event):
         self.__update_ansible_playbook()
 
+        try:
+            ansible.init_charm(self)
+        except Exception as e:
+            logger.error("Init Ansible extension failed: {}".format(str(e)))
+
+        try:
+            ansible.apply_playbook(
+                playbook='playbook.yaml',
+                tags=["config"],
+            )
+        except Exception as e:
+            logger.error("Ansible playbook failed: {}".format(str(e)))
+
     def __update_ansible_playbook(self):
         playbook = self.config.get('playbook')
         with open('playbook.yaml', 'w') as f:
@@ -84,9 +97,8 @@ class AnsibleCharm(CharmBase):
 
         try:
             ansible.init_charm(self)
-            logger.debug("Ansible extension initiated")
         except Exception as e:
-            logger.error("Init Ansible failed: {}".format(str(e)))
+            logger.error("Init Ansible extension failed: {}".format(str(e)))
 
         try:
             ansible.apply_playbook(
@@ -102,9 +114,8 @@ class AnsibleCharm(CharmBase):
         self.unit.status = MaintenanceStatus("Starting")
         try:
             ansible.init_charm(self)
-            logger.debug("Ansible extension initiated")
         except Exception as e:
-            logger.error("Init Ansible failed: {}".format(str(e)))
+            logger.error("Init Ansible extension failed: {}".format(str(e)))
 
         try:
             ansible.apply_playbook(
@@ -120,9 +131,8 @@ class AnsibleCharm(CharmBase):
         self.unit.status = MaintenanceStatus("Stopping")
         try:
             ansible.init_charm(self)
-            logger.debug("Ansible extension initiated")
         except Exception as e:
-            logger.error("Init Ansible failed: {}".format(str(e)))
+            logger.error("Init Ansible extension failed: {}".format(str(e)))
 
         try:
             ansible.apply_playbook(
@@ -148,11 +158,10 @@ class AnsibleCharm(CharmBase):
             return
         try:
             ansible.init_charm(self)
-            logger.debug("Ansible extension initiated")
         except Exception as e:
             logger.error(e)
-            event.log("Init Ansible failed: {}".format(str(e)))
-            event.fail("Init Ansible failed: {}".format(str(e)))
+            event.log("Init Ansible extension failed: {}".format(str(e)))
+            event.fail("Init Ansible extension failed: {}".format(str(e)))
             return
 
         try:
