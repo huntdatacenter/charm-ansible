@@ -59,7 +59,9 @@ class AnsibleCharm(CharmBase):
         self.framework.observe(self.on.upgrade_charm, self._on_install)
         self.framework.observe(self.on.post_series_upgrade, self._on_install)
         self.framework.observe(self.on.ansible_playbook_action, self._on_ansible_playbook_action)
+        self.framework.observe(self.on.data_storage_attached, self._on_data_storage_attached)
         self._stored.set_default(things=[])
+        self._stored.set_default(storages={})
 
     def _on_config_changed(self, event):
         self.__update_ansible_playbook()
@@ -184,6 +186,31 @@ class AnsibleCharm(CharmBase):
                 "returncode": returncode,
                 "results": results,
             })
+
+    def _on_data_storage_attached(self, event):
+        try:
+            storage_name = 'data'
+            volumes = self.model.storages[storage_name]
+            logger.info("Attaching storage [{storage_name}]: Found {vol_count} volume(s)".format(
+                storage_name=storage_name,
+                vol_count=len(volumes),
+            ))
+            if volumes:
+                storage = volumes[0]
+                storage_path = storage.location
+                # set storage path in configs
+                self._stored.storages[storage_name] = str(storage_path)
+            else:
+                del self._stored.storages[storage_name]
+        except Exception as e:
+            logger.error("Attaching storage failed [{storage_name}]: {error}".format(
+                storage_name=storage_name,
+                error=str(e)
+            ))
+        try:
+            logger.info("Storages: {}".format(repr(dict(self._stored.storages))))
+        except Exception as e:
+            logger.error("Error printing storages: {}".format(str(e)))
 
 
 if __name__ == "__main__":
