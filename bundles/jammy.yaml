@@ -9,10 +9,12 @@ applications:
   ubuntu:
     charm: huntdatacenter-ubuntu-lite
     num_units: 1
+    series: jammy
     to:
     - '0'
   cmatrix:
     charm: ../ansible.charm
+    series: jammy
     options:
       playbook: "include-file://playbook.yaml"
 
