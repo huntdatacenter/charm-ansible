@@ -32,6 +32,12 @@ ansible_vars_path = '/etc/ansible/host_vars/localhost'
 ansible_remote_tmp = '/root/.ansible/tmp'
 
 
+class AnsiblePlaybookError(Exception):
+    """Exception - Ansible Playbook Error."""
+
+    pass
+
+
 class Ansible():
 
     def __init__(self):
@@ -69,7 +75,13 @@ class Ansible():
             ])
             hosts_file.write(config)
 
-    def apply_playbook(self, playbook, tags=None, extra_vars={}, env={}, diff=False, check=False):
+    def apply_playbook(self, playbook, tags=None, extra_vars={}, env={}, diff=False, check=False, throw=False):
+        """
+        Run ansible playbook.
+
+        Execute playbook file.
+        """
+
         pb = AnsiblePlaybook(
             self.charm,
             self.model,
@@ -88,16 +100,21 @@ class Ansible():
             pb_path = os.path.abspath(playbook)
         else:
             pb_path = playbook
+        if "/./" in pb_path:
+            pb_path = pb_path.replace("/./", "/")
 
         log.info(f'Run playbook: {pb_path}')
-        if pb.run(
+        returncode, results = pb.run(
             pb_path,
             subset="localhost",
             extra_vars=extra_vars,
             env=env,
-        ) != 0:
+        )
+        if returncode != 0:
             log.error(f"Failed to run ansible playbook: {pb_path}")
-            return
+            if throw:
+                raise AnsiblePlaybookError("Ansible Playbook returned non-zero exit code.")
+        return returncode, results
 
 
 class AnsiblePlaybook:
@@ -172,7 +189,7 @@ class AnsiblePlaybook:
 
     def run(
         self, playbook_path, subset=None, extra_vars={}, passwords={}, env={},
-        verbosity=0, debug=False, **kw
+        verbosity=0, debug=False, debug_executor=False, **kw
     ):
         from ansible import context
         from ansible.utils.display import initialize_locale
@@ -265,7 +282,7 @@ class AnsiblePlaybook:
         except Exception as e:
             log.error(e)
 
-        if debug:
+        if debug_executor:
             return returncode, results, executor
 
         return returncode, results
