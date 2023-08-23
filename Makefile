@@ -21,15 +21,16 @@ DIR_NAME = "$(shell basename $(shell pwd))"
 VM_NAME = juju-dev--$(DIR_NAME)
 
 clean:  ## Remove artifacts
+	charmcraft clean --verbose
 	rm -vf ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm
 
 ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm:
-	tox -e build
+	charmcraft pack --verbose
 
 rename:
 	mv -v ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm $(CHARM_NAME)
 
-build: clean ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm rename  ## Build charm
+build: ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm rename  ## Build charm
 
 deploy:  ## Deploy charm
 	juju deploy ./$(CHARM_NAME)
