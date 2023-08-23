@@ -58,7 +58,7 @@ class Ansible():
                 log.error('Could not set app_name')
 
     def install_ansible_support(self):
-        """Ansible should be part of requirements.txt file."""
+        """Create ansible configs."""
         try:
             if ansible_hosts_path and ansible_hosts_path.startswith('/etc/ansible'):
                 os.makedirs('/etc/ansible/host_vars', mode=0o755, exist_ok=True)
@@ -75,13 +75,17 @@ class Ansible():
             ])
             hosts_file.write(config)
 
-    def apply_playbook(self, playbook, tags=None, extra_vars={}, env={}, diff=False, check=False, throw=False):
+    def apply_playbook(
+        self, playbook, tags=None, extra_vars={}, env={}, diff=False, check=False, throw=False
+    ):
         """
         Run ansible playbook.
 
         Execute playbook file.
         """
-
+        kwargs = {}
+        if tags:
+            kwargs['tags'] = tags.split(',') if isinstance(tags, str) else tags
         pb = AnsiblePlaybook(
             self.charm,
             self.model,
@@ -92,6 +96,7 @@ class Ansible():
             become=True,
             diff=diff,
             check=check,
+            **kwargs
         )
 
         if charm_dir and os.path.exists(os.path.join(charm_dir, playbook)):
