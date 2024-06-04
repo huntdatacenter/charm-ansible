@@ -22,15 +22,15 @@ VM_NAME = juju-dev--$(DIR_NAME)
 
 clean:  ## Remove artifacts
 	charmcraft clean --verbose
-	rm -vf ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm
+	rm -vf ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64_ubuntu-24.04-amd64-arm64.charm
 
-ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm:
+ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64_ubuntu-24.04-amd64-arm64.charm:
 	charmcraft pack --verbose
 
 rename:
-	mv -v ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm $(CHARM_NAME)
+	mv -v ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64_ubuntu-24.04-amd64-arm64.charm $(CHARM_NAME)
 
-build: ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm rename  ## Build charm
+build: ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64_ubuntu-24.04-amd64-arm64.charm rename  ## Build charm
 
 deploy:  ## Deploy charm
 	juju deploy ./$(CHARM_NAME)

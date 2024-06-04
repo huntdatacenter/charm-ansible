@@ -1,0 +1,19 @@
+machines:
+  '0':
+    series: noble
+relations:
+- - ubuntu:juju-info
+  - cmatrix:juju-info
+series: noble
+applications:
+  ubuntu:
+    charm: huntdatacenter-ubuntu-lite
+    num_units: 1
+    series: noble
+    to:
+    - '0'
+  cmatrix:
+    charm: ../ansible.charm
+    series: noble
+    options:
+      playbook: "include-file://playbook.yaml"
