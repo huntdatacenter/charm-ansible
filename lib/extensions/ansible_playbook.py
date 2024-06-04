@@ -200,7 +200,10 @@ class AnsiblePlaybook:
         verbosity=0, debug=False, debug_executor=False, **kw
     ):
         from ansible import context
-        from ansible.utils.display import initialize_locale
+        try:
+            from ansible.utils.display import initialize_locale
+        except Exception:
+            from ansible.cli import initialize_locale
         from ansible.executor.playbook_executor import PlaybookExecutor, display
         from ansible.playbook import Playbook
 
@@ -225,14 +228,14 @@ class AnsiblePlaybook:
         initialize_locale()
         if not os.path.exists(playbook_path):
             log.error(f"Ansible Playbook does not exist: {playbook_path}")
-            return False
+            return 255, {}
 
         try:
             p = Playbook.load(playbook_path, variable_manager=self.variable_manager, loader=self.loader)
         except Exception as e:
             log.error(e)
             log.error("File is not a valid Ansible Playbook")
-            return False
+            return 255, {}
 
         if subset:
             self.inventory.subset(subset)
@@ -249,7 +252,7 @@ class AnsiblePlaybook:
 
         if not hosts:
             log.error(f"No hosts found: subset={subset} patterns={','.join(patterns)}")
-            return False
+            return 255, {}
 
         if debug:
             log.info(f"Target hosts: {hosts}")
