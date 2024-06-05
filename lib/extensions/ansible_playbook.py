@@ -207,7 +207,7 @@ class AnsiblePlaybook:
         from ansible.executor.playbook_executor import PlaybookExecutor, display
         from ansible.playbook import Playbook
 
-        if self.model or not hasattr(self.model, 'config'):
+        if self.model and hasattr(self.model, 'config'):
             model_config = dict(deepcopy(self.model.config))
             model_config['app_name'] = self.app_name
         else:
