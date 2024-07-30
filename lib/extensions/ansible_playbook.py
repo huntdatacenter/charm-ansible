@@ -79,7 +79,7 @@ class Ansible():
             hosts_file.write(config)
 
     def apply_playbook(
-        self, playbook, tags=None, extra_vars={}, env={}, diff=False, check=False, throw=False
+        self, playbook, tags=None, extra_vars={}, env={}, diff=False, check=False, become=True, throw=False
     ):
         """
         Run ansible playbook.
@@ -96,7 +96,7 @@ class Ansible():
             inventory_path=ansible_hosts_path,
             connection="local",
             basedir=charm_dir,
-            become=True,
+            become=become,
             diff=diff,
             check=check,
             **kwargs
@@ -261,6 +261,8 @@ class AnsiblePlaybook:
             self.variable_manager.extra_vars[key] = value
         self.variable_manager.extra_vars['ansible_check_mode'] = True if context.CLIARGS['check'] else False
 
+        whichpython_original = os.getenv("WHICHPYTHON")
+
         try:
             os.environ["WHICHPYTHON"] = self.whichpython
             os.environ["ANSIBLE_FORCE_COLOR"] = "1"
@@ -281,7 +283,10 @@ class AnsiblePlaybook:
         except Exception as e:
             log.error(e)
         finally:
-            os.environ.pop('WHICHPYTHON', None)
+            if whichpython_original:
+                os.environ["WHICHPYTHON"] = whichpython_original
+            else:
+                os.environ.pop('WHICHPYTHON', None)
             os.environ.pop('ANSIBLE_PYTHON_INTERPRETER', None)
 
         try:
@@ -375,7 +380,7 @@ def juju_state_to_yaml(
 
     yaml_dir = os.path.dirname(yaml_path)
     if not os.path.exists(yaml_dir):
-        os.makedirs(yaml_dir)
+        os.makedirs(yaml_dir, mode=0o755, exist_ok=True)
 
     if os.path.exists(yaml_path):
         with open(yaml_path, "r") as existing_vars_file:
