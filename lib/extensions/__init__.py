@@ -1,3 +1,3 @@
 from .ansible_playbook import Ansible
 
-ansible = Ansible()
+ansible_manager = Ansible()

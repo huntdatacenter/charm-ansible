@@ -25,14 +25,14 @@ from functools import wraps
 from copy import deepcopy
 
 log = logging.getLogger(__name__)
-charm_dir = os.getenv('CHARM_DIR', None)
-unit_name = os.getenv('JUJU_UNIT_NAME', None)
-ansible_hosts_path = '/etc/ansible/hosts'
+CHARM_DIR = os.getenv('CHARM_DIR', None)
+# UNIT_NAME = os.getenv('JUJU_UNIT_NAME', None)
+ANSIBLE_HOSTS_PATH = '/etc/ansible/hosts'
 # Ansible will automatically include any vars in the following
 # file in its inventory when run locally.
-ansible_vars_path = '/etc/ansible/host_vars/localhost'
+ANSIBLE_VARS_PATH = '/etc/ansible/host_vars/localhost'
 
-ansible_remote_tmp = '/root/.ansible/tmp'
+ANSIBLE_REMOTE_TMP = '/root/.ansible/tmp'
 
 
 class AnsiblePlaybookError(Exception):
@@ -55,31 +55,32 @@ class Ansible():
             self.app_name = self.model.app.name
         except Exception:
             log.warning('Exception on set app_name')
-            if charm_dir and isinstance(charm_dir, str) and charm_dir.split('/')[0]:
-                self.app_name = charm_dir.split('/')[0]
+            if CHARM_DIR and isinstance(CHARM_DIR, str) and CHARM_DIR.split('/')[0]:
+                self.app_name = CHARM_DIR.split('/')[0]
             if not self.app_name:
                 log.error('Could not set app_name')
 
     def install_ansible_support(self):
         """Create ansible configs."""
         try:
-            if ansible_hosts_path and ansible_hosts_path.startswith('/etc/ansible'):
+            if ANSIBLE_HOSTS_PATH and ANSIBLE_HOSTS_PATH.startswith('/etc/ansible'):
                 os.makedirs('/etc/ansible/host_vars', mode=0o755, exist_ok=True)
         except Exception as e:
             log.warning('install_ansible_support failed to create /etc/ansible: {}'.format(str(e)))
-        with open(ansible_hosts_path, 'w+') as hosts_file:
+        with open(ANSIBLE_HOSTS_PATH, 'w+') as hosts_file:
             hosts_file.write('[all]\n')
             config = ' '.join([
                 'localhost',
                 'ansible_connection=local',
-                'ansible_remote_tmp=/root/.ansible/tmp',
+                'ANSIBLE_REMOTE_TMP=/root/.ansible/tmp',
                 # 'ansible_python_interpreter=/usr/bin/python3',
                 '',  # newline in the end
             ])
             hosts_file.write(config)
 
     def apply_playbook(
-        self, playbook, tags=None, extra_vars={}, env={}, diff=False, check=False, become=True, throw=False
+        self, playbook, tags=None, extra_vars={}, env={}, diff=False, check=False, become=True, throw=False,
+        verbosity=None,
     ):
         """
         Run ansible playbook.
@@ -89,21 +90,26 @@ class Ansible():
         kwargs = {}
         if tags:
             kwargs['tags'] = tags.split(',') if isinstance(tags, str) else tags
+        if verbosity:
+            try:
+                kwargs['verbosity'] = int(verbosity)
+            except Exception as e:
+                log.error(f"Failed to set verbosity parameter [verbosity={verbosity}]: {e}")
         pb = AnsiblePlaybook(
             self.charm,
             self.model,
             self.app_name,
-            inventory_path=ansible_hosts_path,
+            inventory_path=ANSIBLE_HOSTS_PATH,
             connection="local",
-            basedir=charm_dir,
+            basedir=CHARM_DIR,
             become=become,
             diff=diff,
             check=check,
             **kwargs
         )
 
-        if charm_dir and os.path.exists(os.path.join(charm_dir, playbook)):
-            pb_path = os.path.join(charm_dir, playbook)
+        if CHARM_DIR and os.path.exists(os.path.join(CHARM_DIR, playbook)):
+            pb_path = os.path.join(CHARM_DIR, playbook)
         elif os.path.exists(os.path.abspath(playbook)):
             pb_path = os.path.abspath(playbook)
         else:
@@ -111,7 +117,7 @@ class Ansible():
         if "/./" in pb_path:
             pb_path = pb_path.replace("/./", "/")
 
-        log.info(f'Run playbook: {pb_path}')
+        # log.info(f'Run playbook: {pb_path}')
         returncode, results = pb.run(
             pb_path,
             subset="localhost",
@@ -119,16 +125,18 @@ class Ansible():
             env=env,
         )
         if returncode != 0:
-            log.error(f"Failed to run ansible playbook: {pb_path}")
+            log.error(f"Failed to run ansible playbook: {pb_path} (tags={tags})")
+            log.error(f"extra_vars:\n{extra_vars!r}")
+            log.error(f"env:\n{env!r}")
             if throw:
-                raise AnsiblePlaybookError("Ansible Playbook returned non-zero exit code.")
+                raise AnsiblePlaybookError(f"Ansible Playbook '{pb_path}' returned non-zero exit code.")
         return returncode, results
 
 
 class AnsiblePlaybook:
     def __init__(
-        self, charm, model, app_name, inventory_path=ansible_hosts_path, basedir=charm_dir,
-        local_tmp='/tmp', remote_tmp=ansible_remote_tmp, **kw
+        self, charm, model, app_name, inventory_path=ANSIBLE_HOSTS_PATH, basedir=CHARM_DIR,
+        local_tmp='/tmp', remote_tmp=ANSIBLE_REMOTE_TMP, **kw
     ):
         from ansible.parsing.dataloader import DataLoader
         from ansible.inventory.manager import InventoryManager
@@ -214,7 +222,7 @@ class AnsiblePlaybook:
             model_config = {}
 
         extra = juju_state_to_yaml(
-            ansible_vars_path, model_config=model_config, namespace_separator='__',
+            ANSIBLE_VARS_PATH, model_config=model_config, namespace_separator='__',
             allow_hyphens_in_keys=False, mode=(stat.S_IRUSR | stat.S_IWUSR)
         )
         extra.update(extra_vars)
@@ -365,9 +373,9 @@ def juju_state_to_yaml(
     """
     config = model_config
 
-    # Add the charm_dir which we will need to refer to charm
+    # Add the CHARM_DIR which we will need to refer to charm
     # file resources etc.
-    config['charm_dir'] = charm_dir
+    config['charm_dir'] = CHARM_DIR
     config['local_unit'] = os.environ['JUJU_UNIT_NAME']
     config['unit_private_address'] = unit_get('private-address')
     config['unit_public_address'] = unit_get('public-address')

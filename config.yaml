@@ -5,19 +5,35 @@
 
 options:
   playbook:
-    default: "{}"
+    default: |
+      - hosts: localhost
+        connection: local
+        become: true
+        gather_facts: false
+        tasks: []
     type: string
     description: |
       Ansible playbook file.
       Use yaml file with keys environment and hosts.
       Bundle example: 'include-file://files/playbook.yaml'
       Command example: 'juju config app_name playbook=@playbook.yaml'
+  storage_mount:
+    default: ""
+    type: string
+    description: |
+      If storage is added, it will be bind mounted on this path.
+
+      Default: /opt/charm-ansible/<app_name>/storage
   crontab:
     default: ""
     type: string
     description: |
-      Crontab config for running regular tasks
-      Cron file will be created as /etc/cron.d/charm_<app_name>
-      Formatting: '* * * * * <username> <script-with-parameters>'
+      Crontab config for running regular tasks. Use multiple lines to add more cron jobs.
+      Cron jobs will be placed in /etc/cron.d/charm_<app_name> config file.
+
+      https://help.ubuntu.com/community/CronHowto#:~:text=Two%20Other%20Types%20of%20Crontab,-The%20crontab
+
+      Formatting: '<minute> <hour> <day> <month> <weekday> <username> <script-with-parameters>'
       Example: '0 0 * * * root /usr/bin/true'
-      Loading from file example: 'juju config app_name playbook=@crontab'
+
+      Configure from example file: 'juju config $app_name playbook=@bundles/crontab.txt'

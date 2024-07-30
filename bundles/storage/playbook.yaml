@@ -19,7 +19,6 @@
       ignore_errors: true
       tags:
         - never
-        - install
         - debug
 
     - name: Print all extra vars
@@ -28,25 +27,4 @@
       ignore_errors: true
       tags:
         - never
-        - install
         - debug
-
-    # - name: Install cmatrix
-    #   ansible.builtin.apt:
-    #     name:
-    #       - "cmatrix"
-    #   become: true
-    #   tags:
-    #     - never
-    #     - install
-    #     - start
-
-    # - name: Remove cmatrix
-    #   ansible.builtin.apt:
-    #     name:
-    #       - "cmatrix"
-    #     state: absent
-    #   become: true
-    #   tags:
-    #     - never
-    #     - stop

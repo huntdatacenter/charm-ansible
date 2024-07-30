@@ -21,6 +21,9 @@ applications:
     # juju config ubuntu-storage playbook=@playbook.yaml
     options:
       playbook: "include-file://playbook.yaml"
+      # /etc/cron.d/charm_ubuntu_storage
+      crontab: |
+        * * * * * root /usr/bin/true
     # -- List storage pools to find out whether you will use lxd, cinder, or something else
     #
     # juju list-storage-pools

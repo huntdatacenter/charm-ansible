@@ -12,6 +12,9 @@ parts:
       - pkg-config
     charm-python-packages:
       - setuptools
+    prime:
+      - ansible.cfg
+      - playbooks/storage.yaml
 bases:
   - build-on:
       - name: "ubuntu"

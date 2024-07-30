@@ -1,0 +1,42 @@
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Create a directory if it does not exist
+      ansible.builtin.file:
+        path: "{{ storage_bind_mount }}"
+        state: directory
+        mode: '0755'
+      tags:
+        - never
+        - mount
+
+    - name: Bind mount a volume
+      ansible.posix.mount:
+        path: "{{ storage_bind_mount }}"
+        src: "{{ storage_volume }}"
+        opts: bind
+        state: mounted
+        fstype: none
+      when:
+        - storage_volume is defined and storage_volume
+        - storage_bind_mount is defined and storage_bind_mount
+      tags:
+        - never
+        - mount
+
+    - name: Unmount a volume
+      ansible.posix.mount:
+        path: "{{ storage_bind_mount }}"
+        src: "{{ storage_volume }}"
+        opts: bind
+        state: absent
+        fstype: none
+      when:
+        - storage_volume is defined and storage_volume
+        - storage_bind_mount is defined and storage_bind_mount
+      tags:
+        - never
+        - unmount
