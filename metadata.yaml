@@ -11,6 +11,8 @@ description: |
 summary: |
   Ansible subordinate charm executes preconfigured ansible playbook
   to handle minor details that are out of scope of superior charm.
+maintainers:
+  - HUNT Cloud <cloud@hunt.ntnu.no>
 
 subordinate: true
 

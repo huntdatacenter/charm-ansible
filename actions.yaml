@@ -5,12 +5,31 @@
 
 ansible-playbook:
   description: Run ansible playbook
+  parallel: false
   params:
     tags:
-      description: "Execute Tags"
+      description: "Comma separate string of tags. Only run plays and tasks tagged with these values."
       type: string
     extra:
       description: "Json encoded string with extra variables for playbook"
       type: string
+    diff:
+      description: "Log ansible diff (enable with: diff=1)"
+      type: integer
+      minimum: 0
+      maximum: 1
+    check:
+      description: "Use ansible check mode - dry run (enable with: check=1)"
+      type: integer
+      minimum: 0
+      maximum: 1
+    verbosity:
+      description: |
+        Set ansible logging verbosity from 1 to 6 (default: 0)
+
+        Setting verbosity=4 is equivalent of adding -vvvv after ansible-playbook command.
+      type: integer
+      minimum: 0
+      maximum: 6
   required:
     - tags

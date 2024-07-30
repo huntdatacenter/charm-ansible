@@ -1,0 +1,30 @@
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Run apt update
+      ansible.builtin.apt:
+        update_cache: true
+      become: true
+      tags:
+        - never
+        - install
+        - start
+
+    - name: Print all environment variables
+      ansible.builtin.debug:
+        var: environment
+      ignore_errors: true
+      tags:
+        - never
+        - debug
+
+    - name: Print all extra vars
+      ansible.builtin.debug:
+        var: hostvars[inventory_hostname]
+      ignore_errors: true
+      tags:
+        - never
+        - debug

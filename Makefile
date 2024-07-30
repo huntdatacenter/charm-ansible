@@ -2,6 +2,7 @@
 
 # Use one shell for all commands in a target recipe
 .ONESHELL:
+.EXPORT_ALL_VARIABLES:
 .PHONY: help clean rename build deploy list launch mount umount bootstrap up down ssh destroy bridge
 # Set default goal
 .DEFAULT_GOAL := help
@@ -10,9 +11,11 @@ SHELL := /bin/bash
 
 # Charm variables
 CHARM_NAME := ansible.charm
+CHARMHUB_NAME := huntdatacenter-ansible
 CHARM_STORE_URL := https://charmhub.io/huntdatacenter-charm-ansible
 CHARM_HOMEPAGE := https://github.com/huntdatacenter/charm-ansible/
 CHARM_BUGS_URL := https://github.com/huntdatacenter/charm-ansible/issues
+CHARM_BUILD := ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64_ubuntu-24.04-amd64-arm64.charm
 
 # Multipass variables
 UBUNTU_VERSION = jammy
@@ -22,18 +25,28 @@ VM_NAME = juju-dev--$(DIR_NAME)
 
 clean:  ## Remove artifacts
 	charmcraft clean --verbose
-	rm -vf ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm
+	rm -vf $(CHARM_BUILD) $(CHARM_NAME)
 
-ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm:
+$(CHARM_BUILD):
 	charmcraft pack --verbose
 
-rename:
-	mv -v ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm $(CHARM_NAME)
+$(CHARM_NAME): $(CHARM_BUILD)
+	mv -v $(CHARM_BUILD) $(CHARM_NAME)
 
-build: ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64.charm rename  ## Build charm
+build: $(CHARM_NAME)  ## Build charm
+
+clean-build: $(CHARM_NAME)  ## Build charm from scratch
 
 deploy:  ## Deploy charm
 	juju deploy ./$(CHARM_NAME)
+
+login:
+	bash -c "test -s ~/.charmcraft-auth || charmcraft login --export ~/.charmcraft-auth"
+
+release: login  ## Release charm
+	@echo "# -- Releasing charm: https://charmhub.io/$(CHARMHUB_NAME)"
+	$(eval CHARMCRAFT_AUTH := $(shell cat ~/.charmcraft-auth))
+	charmcraft upload --name $(CHARMHUB_NAME) --release latest/stable $(CHARM_NAME)
 
 
 name:  ## Print name of the VM
@@ -56,7 +69,8 @@ umount:
 bootstrap:
 	$(eval ARCH := $(shell multipass exec $(VM_NAME) -- dpkg --print-architecture))
 	multipass exec $(VM_NAME) -- juju bootstrap localhost lxd --bootstrap-constraints arch=$(ARCH) \
-	&& multipass exec $(VM_NAME) -- juju add-model default
+	&& multipass exec $(VM_NAME) -- juju add-model default \
+	&& multipass exec $(VM_NAME) -- juju model-config enable-os-upgrade=false
 
 up: launch mount bootstrap ssh  ## Start a VM
 

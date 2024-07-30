@@ -1,0 +1,34 @@
+machines:
+  '0':
+    base: ubuntu@24.04
+    # series: noble
+
+default-base: ubuntu@24.04
+# series: noble
+
+relations:
+- - ubuntu:juju-info
+  - ubuntu-storage:juju-info
+
+applications:
+  ubuntu:
+    charm: huntdatacenter-ubuntu-lite
+    num_units: 1
+    to:
+    - '0'
+  ubuntu-storage:
+    charm: ../../ansible.charm
+    # juju config ubuntu-storage playbook=@playbook.yaml
+    options:
+      playbook: "include-file://playbook.yaml"
+      # /etc/cron.d/charm_ubuntu_storage
+      crontab: |
+        * * * * * root /usr/bin/true
+    # -- List storage pools to find out whether you will use lxd, cinder, or something else
+    #
+    # juju list-storage-pools
+    # juju help create-storage-pool
+    storage:
+      data: lxd,2G
+      # data: cinder,100G
+    # -- Mount path will be something like: /var/lib/juju/storage/data/0
