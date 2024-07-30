@@ -11,6 +11,13 @@ options:
       Ansible playbook file.
       Use yaml file with keys environment and hosts.
       Bundle example: 'include-file://files/playbook.yaml'
-      Command example: juju config appname playbook=@playbook.yaml
-
-
+      Command example: 'juju config app_name playbook=@playbook.yaml'
+  crontab:
+    default: ""
+    type: string
+    description: |
+      Crontab config for running regular tasks
+      Cron file will be created as /etc/cron.d/charm_<app_name>
+      Formatting: '* * * * * <username> <script-with-parameters>'
+      Example: '0 0 * * * root /usr/bin/true'
+      Loading from file example: 'juju config app_name playbook=@crontab'
