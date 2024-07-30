@@ -69,7 +69,8 @@ umount:
 bootstrap:
 	$(eval ARCH := $(shell multipass exec $(VM_NAME) -- dpkg --print-architecture))
 	multipass exec $(VM_NAME) -- juju bootstrap localhost lxd --bootstrap-constraints arch=$(ARCH) \
-	&& multipass exec $(VM_NAME) -- juju add-model default
+	&& multipass exec $(VM_NAME) -- juju add-model default \
+	&& multipass exec $(VM_NAME) -- juju model-config enable-os-upgrade=false
 
 up: launch mount bootstrap ssh  ## Start a VM
 
