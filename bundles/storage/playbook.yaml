@@ -13,6 +13,15 @@
         - install
         - start
 
+    - name: "Leader unit"
+      ansible.builtin.debug:
+        msg: "Leader unit: {{ leader }}"
+      ignore_errors: true
+      tags:
+        - never
+        - leader
+        - debug
+
     - name: Print all environment variables
       ansible.builtin.debug:
         var: environment

@@ -17,13 +17,34 @@ options:
       Use yaml file with keys environment and hosts.
       Bundle example: 'include-file://files/playbook.yaml'
       Command example: 'juju config app_name playbook=@playbook.yaml'
-  storage_mount:
+  mount_path:
     default: ""
     type: string
     description: |
-      If storage is added, it will be bind mounted on this path.
+      If storage is added by Juju, charm will be bind mounted on this path.
 
       Default: /opt/charm-ansible/<app_name>/storage
+  mount_mode:
+    default: "0700"
+    type: string
+    description: |
+      If storage is bind mounted charm will set directory mode.
+
+      Default: 0700
+  mount_owner:
+    default: "root"
+    type: string
+    description: |
+      If storage is bind mounted charm will set directory owner.
+
+      Default: root
+  mount_group:
+    default: "root"
+    type: string
+    description: |
+      If storage is bind mounted charm will set directory group.
+
+      Default: root
   crontab:
     default: ""
     type: string

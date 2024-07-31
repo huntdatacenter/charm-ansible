@@ -44,8 +44,6 @@ except Exception as e:
 
 logger = logging.getLogger(__name__)
 
-INTERFACE = "juju-info"
-
 
 class AnsibleCharm(CharmBase):
     """Charm the service."""
@@ -96,11 +94,12 @@ class AnsibleCharm(CharmBase):
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format(str(e)))
 
+        self._stored.crontab = self.model.config['crontab']
+        self.__update_crontab(self._stored.crontab, self.app.name)
+
+    def __update_crontab(self, cron_content, app_name):
         # /etc/cron.d/charm_<app_name>
         try:
-            self._stored.crontab = self.model.config['crontab']
-            cron_content = self._stored.crontab
-            app_name = self.app.name
             cronfile_path = os.path.join("/etc/cron.d", f"charm_{app_name.replace('-', '_')}")
             file_path = Path(cronfile_path)
             file_exists = file_path.exists()
@@ -130,15 +129,10 @@ class AnsibleCharm(CharmBase):
         }
 
         try:
-            extra_vars['ingress_address'] = self.ingress_address
-        except Exception as e:
-            logger.error("Failed to fetch ingress IP address: {}".format(str(e)))
-
-        try:
             storages = dict(self._stored.storages)
             extra_vars['storages'] = storages
-            if self.model.config['storage_mount']:
-                storage_bind_mount = self.model.config['storage_mount']
+            if self.model.config['mount_path']:
+                storage_bind_mount = self.model.config['mount_path']
             else:
                 storage_bind_mount = os.path.join("/opt/charm-ansible", self.app.name, "storage")
             if storages:
@@ -277,12 +271,6 @@ class AnsibleCharm(CharmBase):
             logger.error("Failed to read the ansible version: {}".format(str(e)))
             version = '0.0.1'
         return version
-
-    @property
-    def ingress_address(self):
-        """The ingress-address of the swarm cluster
-        """
-        return str(self.model.get_binding(INTERFACE).network.ingress_address)
 
     def _on_ansible_playbook_action(self, event):
         """
