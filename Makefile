@@ -18,7 +18,7 @@ CHARM_BUGS_URL := https://github.com/huntdatacenter/charm-ansible/issues
 CHARM_BUILD := ansible_ubuntu-20.04-amd64-arm64_ubuntu-22.04-amd64-arm64_ubuntu-24.04-amd64-arm64.charm
 
 # Multipass variables
-UBUNTU_VERSION = jammy
+UBUNTU_VERSION = noble
 MOUNT_TARGET = /home/ubuntu/vagrant
 DIR_NAME = "$(shell basename $(shell pwd))"
 VM_NAME = juju-dev--$(DIR_NAME)
@@ -66,11 +66,17 @@ mount:
 umount:
 	multipass umount $(VM_NAME):$(MOUNT_TARGET)
 
+recreate-default-model:
+	juju destroy-model --no-prompt default --destroy-storage --force
+	juju add-model default \
+	&& juju model-config -m default enable-os-upgrade=false
+
 bootstrap:
-	$(eval ARCH := $(shell multipass exec $(VM_NAME) -- dpkg --print-architecture))
-	multipass exec $(VM_NAME) -- juju bootstrap localhost lxd --bootstrap-constraints arch=$(ARCH) \
-	&& multipass exec $(VM_NAME) -- juju add-model default \
-	&& multipass exec $(VM_NAME) -- juju model-config enable-os-upgrade=false
+	multipass exec -d $(MOUNT_TARGET) $(VM_NAME) -- tmux new-session -s workspace "bash bin/bootstrap.sh; bash --login"
+#	$(eval ARCH := $(shell multipass exec $(VM_NAME) -- dpkg --print-architecture))
+#	multipass exec $(VM_NAME) -- juju bootstrap localhost lxd --bootstrap-constraints arch=$(ARCH) \
+#	&& multipass exec $(VM_NAME) -- juju add-model default \
+#	&& multipass exec $(VM_NAME) -- juju model-config -m default enable-os-upgrade=false
 
 up: launch mount bootstrap ssh  ## Start a VM
 
@@ -85,6 +91,15 @@ down:  ## Stop the VM
 
 ssh:  ## Connect into the VM
 	multipass exec -d $(MOUNT_TARGET) $(VM_NAME) -- bash
+
+preseed:  ## Pre-seed ubuntu images: make codename=jammy version=22.04 preseed
+	$(eval ARCH := $(shell multipass exec $(VM_NAME) -- dpkg --print-architecture))
+	@echo "Download ubuntu-$(version)-server-cloudimg-$(ARCH).squashfs"
+	wget --tries=15 --retry-connrefused --timeout=15 --random-wait=on -O /home/ubuntu/ubuntu-$(version)-server-cloudimg-$(ARCH).squashfs https://cloud-images.ubuntu.com/releases/$(version)/release/ubuntu-$(version)-server-cloudimg-$(ARCH).squashfs \
+	&& sleep 10 \
+	&& echo "Download ubuntu-$(version)-server-cloudimg-$(ARCH)-lxd.tar.xz" \
+	&& wget --tries=15 --retry-connrefused --timeout=15 --random-wait=on -O /home/ubuntu/ubuntu-$(version)-server-cloudimg-$(ARCH)-lxd.tar.xz https://cloud-images.ubuntu.com/releases/$(version)/release/ubuntu-$(version)-server-cloudimg-$(ARCH)-lxd.tar.xz \
+	&& multipass exec $(VM_NAME) -- lxc image import /home/ubuntu/ubuntu-$(version)-server-cloudimg-$(ARCH)-lxd.tar.xz /home/ubuntu/ubuntu-$(version)-server-cloudimg-$(ARCH).squashfs --alias juju/$(codename)@$(version)/$(ARCH)
 
 destroy:  ## Destroy the VM
 	multipass delete -v --purge $(VM_NAME)

@@ -432,7 +432,7 @@ print(f"Ansible collections version: {ansible_release.ansible_version}")
 ansible_manager = Ansible()
 ansible_manager.apply_playbook(
     playbook='playbook.yaml',
-    tags=[],
+    tags=['debug'],
     extra_vars={},
     env={},
 )

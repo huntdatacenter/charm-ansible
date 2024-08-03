@@ -13,6 +13,7 @@ parts:
     charm-python-packages:
       - setuptools
     prime:
+      - hosts.ini
       - ansible.cfg
       - playbooks/storage.yaml
 bases:

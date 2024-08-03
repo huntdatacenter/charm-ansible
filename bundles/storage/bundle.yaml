@@ -25,6 +25,7 @@ applications:
       mount_mode: "0755"
       mount_owner: "ubuntu"
       mount_group: "ubuntu"
+      verbosity: 1
       # /etc/cron.d/charm_ubuntu_storage
       crontab: |
         * * * * * root /usr/bin/true

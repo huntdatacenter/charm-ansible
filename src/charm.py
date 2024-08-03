@@ -13,10 +13,11 @@ develop a new k8s charm using the Operator Framework:
 """
 
 import json
-import os  # noqa
-import subprocess  # noqa
+import os
+import sys
+# import subprocess  # noqa: F401
 import logging
-# from yaml import safe_load
+# from yaml import safe_load  # noqa: F401
 from pathlib import Path
 
 from ops.charm import CharmBase
@@ -43,6 +44,11 @@ except Exception as e:
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# stream_handler = logging.StreamHandler(stream=sys.stderr)
+# stream_handler.setLevel(logging.INFO)
+# logger.addHandler(stream_handler)
 
 
 class AnsibleCharm(CharmBase):
@@ -67,6 +73,14 @@ class AnsibleCharm(CharmBase):
         self._stored.set_default(storage_name="data")
         self._stored.set_default(crontab="")
 
+    @property
+    def verbosity(self):
+        """
+        Verbosity setting in range <0 - 6>
+        """
+        verbosity = self.model.config['verbosity'] if self.model.config['verbosity'] > 0 else 0
+        return 6 if verbosity > 6 else verbosity
+
     def _on_config_changed(self, event):
         self.__update_ansible_playbook()
 
@@ -90,6 +104,7 @@ class AnsibleCharm(CharmBase):
                 tags=["config"],
                 extra_vars=extra_vars,
                 env=env,
+                verbosity=self.verbosity,
             )
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format(str(e)))
@@ -206,6 +221,7 @@ class AnsibleCharm(CharmBase):
                 tags=["install"],
                 extra_vars=extra_vars,
                 env=env,
+                verbosity=self.verbosity,
             )
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format(str(e)))
@@ -234,6 +250,7 @@ class AnsibleCharm(CharmBase):
                 tags=["start"],
                 extra_vars=extra_vars,
                 env=env,
+                verbosity=self.verbosity,
             )
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format(str(e)))
@@ -256,6 +273,7 @@ class AnsibleCharm(CharmBase):
                 tags=["stop"],
                 extra_vars=extra_vars,
                 env=env,
+                verbosity=self.verbosity,
             )
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format(str(e)))
@@ -403,6 +421,7 @@ class AnsibleCharm(CharmBase):
                     diff=True,
                     check=False,
                     throw=True,
+                    verbosity=self.verbosity,
                 )
             except Exception as e:
                 logger.error(e)
@@ -430,6 +449,7 @@ class AnsibleCharm(CharmBase):
                 diff=True,
                 check=False,
                 throw=True,
+                verbosity=self.verbosity,
             )
         except Exception as e:
             logger.error(e)

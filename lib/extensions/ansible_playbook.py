@@ -6,11 +6,11 @@ Ansible Playbook runner
 
     from .ansible_playbook import Ansible, AnsiblePlaybook
 
-    ansible = Ansible()
-    ansible.install_ansible_support()
-    ansible.init_charm(charm)
+    ansible_manager = Ansible()
+    ansible_manager.install_ansible_support()
+    ansible_manager.init_charm(charm)
 
-    ansible.apply_playbook('playbook.yaml', tags=['install'], extra_vars={})
+    ansible_manager.apply_playbook('playbook.yaml', tags=['install'], extra_vars={})
 
 """
 
@@ -25,14 +25,29 @@ from functools import wraps
 from copy import deepcopy
 
 log = logging.getLogger(__name__)
-CHARM_DIR = os.getenv('CHARM_DIR', None)
-# UNIT_NAME = os.getenv('JUJU_UNIT_NAME', None)
-ANSIBLE_HOSTS_PATH = '/etc/ansible/hosts'
+log.setLevel(logging.WARNING)
+
+CHARM_DIR = os.getenv('CHARM_DIR', os.getcwd())
+LOCAL_UNIT_NAME = os.getenv('JUJU_UNIT_NAME', None)
+
+try:
+    charm_hosts_path = os.path.join(CHARM_DIR, "hosts.ini")
+    if os.path.exists(charm_hosts_path):
+        ANSIBLE_HOSTS_PATH = charm_hosts_path
+    else:
+        raise Exception(f"Hosts file not found: {charm_hosts_path}")
+except Exception as e:
+    log.warning(e, exc_info=True)
+    log.error(f"Failed to set ansible hosts path to CHARM_DIR/hosts.ini: {str(e)}")
+    ANSIBLE_HOSTS_PATH = "/etc/ansible/hosts"
+    log.error(f"Continue using default: {ANSIBLE_HOSTS_PATH}")
+
 # Ansible will automatically include any vars in the following
 # file in its inventory when run locally.
-ANSIBLE_VARS_PATH = '/etc/ansible/host_vars/localhost'
+HOST_VARS_DIR = os.path.join(os.path.dirname(ANSIBLE_HOSTS_PATH), 'host_vars')
+ANSIBLE_VARS_PATH = os.path.join(HOST_VARS_DIR, 'localhost')
 
-ANSIBLE_REMOTE_TMP = '/root/.ansible/tmp'
+ANSIBLE_REMOTE_TMP_DIR = '/root/.ansible/tmp'
 
 
 class AnsiblePlaybookError(Exception):
@@ -63,36 +78,48 @@ class Ansible():
     def install_ansible_support(self):
         """Create ansible configs."""
         try:
-            if ANSIBLE_HOSTS_PATH and ANSIBLE_HOSTS_PATH.startswith('/etc/ansible'):
-                os.makedirs('/etc/ansible/host_vars', mode=0o755, exist_ok=True)
+            # if ANSIBLE_HOSTS_PATH and ANSIBLE_HOSTS_PATH.startswith('/etc/ansible'):
+            #     os.makedirs('/etc/ansible/host_vars', mode=0o755, exist_ok=True)
+            os.makedirs('/etc/ansible/host_vars', mode=0o755, exist_ok=True)
+            if HOST_VARS_DIR and not HOST_VARS_DIR.startswith('/etc/ansible'):
+                os.makedirs(HOST_VARS_DIR, mode=0o755, exist_ok=True)
         except Exception as e:
+            log.warning(e, exc_info=True)
             log.warning('install_ansible_support failed to create /etc/ansible: {}'.format(str(e)))
-        with open(ANSIBLE_HOSTS_PATH, 'w+') as hosts_file:
-            hosts_file.write('[all]\n')
-            config = ' '.join([
-                'localhost',
-                'ansible_connection=local',
-                'ANSIBLE_REMOTE_TMP=/root/.ansible/tmp',
-                # 'ansible_python_interpreter=/usr/bin/python3',
-                '',  # newline in the end
-            ])
-            hosts_file.write(config)
+        if ANSIBLE_HOSTS_PATH.startswith('/etc/ansible'):
+            with open(ANSIBLE_HOSTS_PATH, 'w+') as hosts_file:
+                hosts_file.write('[all]\n')
+                localhost_config = ' '.join([
+                    'localhost',
+                    'ansible_connection=local',
+                    f'ansible_remote_tmp={ANSIBLE_REMOTE_TMP_DIR}',
+                    # 'ansible_python_interpreter=/usr/bin/python3',
+                ]).strip()
+                hosts_file.write(localhost_config)
+                hosts_file.write('\n')  # newline in the end
 
     def apply_playbook(
         self, playbook, tags=None, extra_vars={}, env={}, diff=False, check=False, become=True, throw=False,
-        verbosity=None,
+        verbosity=0,
     ):
         """
         Run ansible playbook.
 
+        Charm config variables are processed using 'juju_state_to_yaml' function and then passed as extra variables.
+
+        extra_vars - overrides all extra variables passed to the playbook including charm config.
+
         Execute playbook file.
         """
         kwargs = {}
+        kw_run = {}
         if tags:
             kwargs['tags'] = tags.split(',') if isinstance(tags, str) else tags
         if verbosity:
             try:
-                kwargs['verbosity'] = int(verbosity)
+                if int(verbosity) >= 0:
+                    kwargs['verbosity'] = int(verbosity)
+                    kw_run['verbosity'] = int(verbosity)
             except Exception as e:
                 log.error(f"Failed to set verbosity parameter [verbosity={verbosity}]: {e}")
         pb = AnsiblePlaybook(
@@ -123,6 +150,7 @@ class Ansible():
             subset="localhost",
             extra_vars=extra_vars,
             env=env,
+            **kw_run,
         )
         if returncode != 0:
             log.error(f"Failed to run ansible playbook: {pb_path} (tags={tags})")
@@ -130,26 +158,35 @@ class Ansible():
             log.error(f"env:\n{env!r}")
             if throw:
                 raise AnsiblePlaybookError(f"Ansible Playbook '{pb_path}' returned non-zero exit code.")
+
+        pb = None
         return returncode, results
 
 
 class AnsiblePlaybook:
     def __init__(
         self, charm, model, app_name, inventory_path=ANSIBLE_HOSTS_PATH, basedir=CHARM_DIR,
-        local_tmp='/tmp', remote_tmp=ANSIBLE_REMOTE_TMP, **kw
+        local_tmp='/tmp', remote_tmp=ANSIBLE_REMOTE_TMP_DIR, **kw
     ):
+        from ansible.plugins.loader import add_all_plugin_dirs
+        from ansible.plugins.loader import init_plugin_loader
         from ansible.parsing.dataloader import DataLoader
         from ansible.inventory.manager import InventoryManager
         from ansible.vars.manager import VariableManager
+        from ansible.utils.collection_loader import AnsibleCollectionConfig
 
         self.charm = charm
         self.model = model
         self.app_name = app_name
+        self.basedir = basedir
 
         self.whichpython = sys.executable
         self.loader = DataLoader()
-        if basedir and os.path.exists(basedir):
-            self.loader.set_basedir(basedir)
+        if self.basedir and os.path.exists(self.basedir):
+            self.loader.set_basedir(self.basedir)
+            add_all_plugin_dirs(self.basedir)
+            if not AnsibleCollectionConfig.collection_finder:
+                init_plugin_loader(self.basedir)
 
         self.inventory = InventoryManager(loader=self.loader, sources=inventory_path)
         self.variable_manager = VariableManager(loader=self.loader, inventory=self.inventory)
@@ -157,7 +194,7 @@ class AnsiblePlaybook:
         try:
             self.verbosity = int(kw.get('verbosity', 0))
         except Exception as e:
-            log.error(e)
+            log.warning(e, exc_info=True)
             self.verbosity = 0
 
         self._cli_args = dict(
@@ -211,6 +248,7 @@ class AnsiblePlaybook:
         try:
             from ansible.utils.display import initialize_locale
         except Exception:
+            # ansible >=9.0.0
             from ansible.cli import initialize_locale
         from ansible.executor.playbook_executor import PlaybookExecutor, display
         from ansible.playbook import Playbook
@@ -230,10 +268,12 @@ class AnsiblePlaybook:
         try:
             display.verbosity = int(verbosity) if verbosity > self.verbosity else int(self.verbosity)
         except Exception as e:
-            log.error(e)
+            log.warning(e, exc_info=True)
+            log.error(f"Failed to set verbosity for playbook run: {playbook_path}")
             display.verbosity = 0
         context.CLIARGS = self._get_cli_args(kw)
         initialize_locale()
+
         if not os.path.exists(playbook_path):
             log.error(f"Ansible Playbook does not exist: {playbook_path}")
             return 255, {}
@@ -241,7 +281,7 @@ class AnsiblePlaybook:
         try:
             p = Playbook.load(playbook_path, variable_manager=self.variable_manager, loader=self.loader)
         except Exception as e:
-            log.error(e)
+            log.warning(e, exc_info=True)
             log.error("File is not a valid Ansible Playbook")
             return 255, {}
 
@@ -269,7 +309,14 @@ class AnsiblePlaybook:
             self.variable_manager.extra_vars[key] = value
         self.variable_manager.extra_vars['ansible_check_mode'] = True if context.CLIARGS['check'] else False
 
+        pythonpath_items = [
+            f"{CHARM_DIR}/venv",
+            f"{CHARM_DIR}/lib",
+        ]
+
         whichpython_original = os.getenv("WHICHPYTHON")
+        pythonpath_original = os.getenv("PYTHONPATH", "")
+        virtualenv_original = os.getenv("VIRTUAL_ENV", "")
 
         try:
             os.environ["WHICHPYTHON"] = self.whichpython
@@ -277,6 +324,17 @@ class AnsiblePlaybook:
             # NOTE do not apply for all - maybe base on parameter
             # os.environ["ANSIBLE_SSH_ARGS"] = "-o StrictHostKeyChecking=accept-new"
             os.environ["ANSIBLE_PYTHON_INTERPRETER"] = self.whichpython
+
+            try:
+                pythonpath_items.extend(env.get('PYTHONPATH', '').split(':'))
+            except Exception as e:
+                log.warning(e, exc_info=True)
+            try:
+                pythonpath_items.extend(pythonpath_original.split(':'))
+            except Exception as e:
+                log.warning(e, exc_info=True)
+            os.environ["PYTHONPATH"] = ":".join([x for x in pythonpath_items if x])
+            os.environ["VIRTUAL_ENV"] = f"{CHARM_DIR}/venv"
 
             for key, value in env.items():
                 os.environ[key] = value if isinstance(value, str) else str(value)
@@ -295,6 +353,14 @@ class AnsiblePlaybook:
                 os.environ["WHICHPYTHON"] = whichpython_original
             else:
                 os.environ.pop('WHICHPYTHON', None)
+            if pythonpath_original:
+                os.environ["PYTHONPATH"] = pythonpath_original
+            else:
+                os.environ.pop('PYTHONPATH', None)
+            if virtualenv_original:
+                os.environ["VIRTUAL_ENV"] = virtualenv_original
+            else:
+                os.environ.pop('VIRTUAL_ENV', None)
             os.environ.pop('ANSIBLE_PYTHON_INTERPRETER', None)
 
         try:
@@ -376,7 +442,7 @@ def juju_state_to_yaml(
     # Add the CHARM_DIR which we will need to refer to charm
     # file resources etc.
     config['charm_dir'] = CHARM_DIR
-    config['local_unit'] = os.environ['JUJU_UNIT_NAME']
+    config['local_unit'] = LOCAL_UNIT_NAME
     config['unit_private_address'] = unit_get('private-address')
     config['unit_public_address'] = unit_get('public-address')
 

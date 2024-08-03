@@ -16,7 +16,12 @@ snap:
     # - snap install lxd --channel=5.0/stable
     - snap install juju --channel=3.5/stable
     - snap install charmcraft --classic --channel=2.x/stable
-    # - snap install charm --classic --channel=stable
+    # sudo snap refresh charmcraft --classic --channel=1.x/stable
+    # -- https://snapcraft.io/jhack
+    # - snap install jhack
+    # - snap connect jhack:dot-local-share-juju snapd
+    # - snap connect jhack:ssh-read snapd
+    # -- Update charms
     # - snap refresh
 
 runcmd:
@@ -57,9 +62,11 @@ runcmd:
 
   - |
     # Make sure juju directory is there
+    sudo -u ubuntu python3 -m pip install --user uv
     sudo -u ubuntu mkdir -p /home/ubuntu/.local/share/juju
     sudo -u ubuntu HOME=/home/ubuntu juju
-    sudo -u ubuntu bash -c "echo alias watch-juju=\'juju status --watch 3s\' >> /home/ubuntu/.bashrc"
+    sudo -u ubuntu bash -c "echo alias watch-juju=\'juju status --watch 3s --storage\' >> /home/ubuntu/.bashrc"
+    sudo -u ubuntu bash -c "echo '[ -z "\$TMUX" ] && exec tmux new-session -A -s workspace' >> /home/ubuntu/.bashrc"
 
   - |
     # Create symlink for compatibility but mount inside home so that juju snap can access

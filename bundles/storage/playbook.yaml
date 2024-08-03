@@ -13,6 +13,48 @@
         - install
         - start
 
+    - name: Install APT packages
+      ansible.builtin.apt:
+        name:
+          - "ca-certificates"
+      ignore_errors: true
+      tags:
+        - never
+        - install
+        - start
+
+    - name: Fetch CA certificate
+      ansible.builtin.get_url:
+        url: 'https://pki.hdc.ntnu.no/hctsca1.crt'
+        dest: '/usr/local/share/ca-certificates/hctsca1.crt'
+        owner: root
+        group: root
+        mode: '0644'
+        checksum: "sha256:dee4d9026c4d152516a292e81f80c31d4dc518a6cb03a07106a2a15485239bf1"
+      tags:
+        - never
+        - install
+        - start
+
+    - name: Update trusted CA
+      ansible.builtin.command:
+        cmd: /usr/sbin/update-ca-certificates
+        creates: /etc/ssl/certs/hctsca1.pem
+      ignore_errors: true
+      register: update_ca_certs
+      changed_when:
+        - "'stdout' in update_ca_certs"
+        - "'0 added, 0 removed; done.' not in update_ca_certs.stdout"
+        - "'skipped, since /etc/ssl/certs/hctsca1.pem exists' not in update_ca_certs.stdout"
+      failed_when:
+        - "'stderr' in update_ca_certs"
+        - "update_ca_certs.stderr != ''"
+        - "update_ca_certs.stderr != 'rehash: warning: skipping ca-certificates.crt,it does not contain exactly one certificate or CRL'"
+      tags:
+        - never
+        - install
+        - start
+
     - name: "Leader unit"
       ansible.builtin.debug:
         msg: "Leader unit: {{ leader }}"

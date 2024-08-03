@@ -4,6 +4,14 @@
 # Learn more about config at: https://juju.is/docs/sdk/config
 
 options:
+  debug:
+    default: false
+    description: Debug mode (more logs)
+    type: boolean
+  verbosity:
+    default: 0
+    description: Ansible verbosity (0 - 6)
+    type: int
   playbook:
     default: |
       - hosts: localhost
