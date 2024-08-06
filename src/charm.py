@@ -87,16 +87,48 @@ class AnsibleCharm(CharmBase):
         try:
             ansible_manager.init_charm(self)
         except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
             logger.error("Init Ansible extension failed: {}".format(str(e)))
 
         try:
             extra_vars = self.__get_extra_vars()
         except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
             logger.error("Failed to fetch extra vars: {}".format(str(e)))
         try:
             env = self.__get_environ()
         except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
             logger.error("Failed to fetch environment variables: {}".format(str(e)))
+
+        try:
+            ansible_manager.apply_playbook(
+                playbook='playbooks/tls.yaml',
+                tags=["config"],
+                extra_vars=extra_vars,
+                env=env,
+                verbosity=self.verbosity,
+            )
+        except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
+            logger.error("Ansible TLS playbook failed: {}".format(str(e)))
+
+        try:
+            ansible_manager.apply_playbook(
+                playbook='playbooks/configs.yaml',
+                tags=["config"],
+                extra_vars=extra_vars,
+                env=env,
+                verbosity=self.verbosity,
+            )
+        except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
+            logger.error("Ansible configs playbook failed: {}".format(str(e)))
 
         try:
             ansible_manager.apply_playbook(
@@ -107,6 +139,8 @@ class AnsibleCharm(CharmBase):
                 verbosity=self.verbosity,
             )
         except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
             logger.error("Ansible playbook failed: {}".format(str(e)))
 
         self._stored.crontab = self.model.config['crontab']
@@ -214,6 +248,32 @@ class AnsibleCharm(CharmBase):
 
         extra_vars = self.__get_extra_vars()
         env = self.__get_environ()
+
+        try:
+            ansible_manager.apply_playbook(
+                playbook='playbooks/tls.yaml',
+                tags=["install"],
+                extra_vars=extra_vars,
+                env=env,
+                verbosity=self.verbosity,
+            )
+        except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
+            logger.error("Ansible TLS playbook failed: {}".format(str(e)))
+
+        try:
+            ansible_manager.apply_playbook(
+                playbook='playbooks/configs.yaml',
+                tags=["config"],
+                extra_vars=extra_vars,
+                env=env,
+                verbosity=self.verbosity,
+            )
+        except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
+            logger.error("Ansible configs playbook failed: {}".format(str(e)))
 
         try:
             ansible_manager.apply_playbook(

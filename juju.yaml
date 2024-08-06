@@ -15,6 +15,7 @@ snap:
     - snap install multipass-sshfs
     # - snap install lxd --channel=5.0/stable
     - snap install juju --channel=3.5/stable
+    # - snap install charmcraft --classic --channel=latest/stable
     - snap install charmcraft --classic --channel=2.x/stable
     # sudo snap refresh charmcraft --classic --channel=1.x/stable
     # -- https://snapcraft.io/jhack

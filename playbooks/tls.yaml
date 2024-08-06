@@ -1,0 +1,65 @@
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Setup app root directory
+      ansible.builtin.file:
+        path: "/opt/charm-ansible/{{ app_name }}"
+        state: directory
+        owner: "root"
+        group: "root"
+        mode: '0700'
+      tags:
+        - never
+        - install
+        - config
+
+    - name: Setup app TLS certs directory
+      ansible.builtin.file:
+        path: "/opt/charm-ansible/{{ app_name }}/tls"
+        state: directory
+        owner: "{{ tls_owner | default('root', true) }}"
+        group: "{{ tls_group | default('root', true) }}"
+        mode: "{{ tls_dir_mode | default('0700', true) }}"
+      tags:
+        - never
+        - install
+        - config
+
+    - name: TLS Certificates
+      ansible.builtin.copy:
+        content: "{{ item.content }}"
+        dest: "/opt/charm-ansible/{{ app_name }}/tls/{{ item.name }}"
+        owner: "{{ tls_owner | default('root', true) }}"
+        group: "{{ tls_group | default('root', true) }}"
+        mode: "{{ tls_mode | default('0700', true) }}"
+      diff: false
+      no_log: true
+      loop:
+        - {name: "server-ca.crt", content: "{{ tls_ca | default('') | string }}"}
+        - {name: "server.crt", content: "{{ tls_cert | default('') | string }}"}
+        - {name: "server.key", content: "{{ tls_key | default('') | string }}"}
+        - {name: "client.crt", content: "{{ tls_client | default('') | string }}"}
+        - {name: "admin.pem", content: "{{ admin_tls_cert | default('') | string }}"}
+        - {name: "admin-key.pem", content: "{{ admin_tls_key | default('') | string }}"}
+        - {name: "admin-client.pem", content: "{{ admin_tls_client | default('') | string }}"}
+      # register: tlsconf
+      tags:
+        - never
+        - install
+        - config
+
+    - name: Create a symbolic link to TLS directory
+      ansible.builtin.file:
+        src: "/opt/charm-ansible/{{ app_name }}/tls"
+        dest: "{{ tls_path | default('/tls', true) }}"
+        owner: "{{ tls_owner | default('root', true) }}"
+        group: "{{ tls_group | default('root', true) }}"
+        state: link
+      when: tls_path | default('', true) | trim | length > 0
+      tags:
+        - never
+        - install
+        - config

@@ -2,10 +2,10 @@
 
 ARCH=$(dpkg --print-architecture)
 
+set -x
+
 juju bootstrap localhost lxd --bootstrap-constraints arch=${ARCH}
 
-juju add-model default
+sleep 1
 
-sleep 5
-
-juju model-config -m default enable-os-upgrade=false
+juju add-model default --config enable-os-upgrade=false

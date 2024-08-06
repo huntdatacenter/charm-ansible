@@ -68,15 +68,13 @@ umount:
 
 recreate-default-model:
 	juju destroy-model --no-prompt default --destroy-storage --force
-	juju add-model default \
-	&& juju model-config -m default enable-os-upgrade=false
+	juju add-model default --config enable-os-upgrade=false
 
 bootstrap:
-	multipass exec -d $(MOUNT_TARGET) $(VM_NAME) -- tmux new-session -s workspace "bash bin/bootstrap.sh; bash --login"
+	multipass exec -d $(MOUNT_TARGET) $(VM_NAME) -- bash --login bin/tmux.sh
 #	$(eval ARCH := $(shell multipass exec $(VM_NAME) -- dpkg --print-architecture))
 #	multipass exec $(VM_NAME) -- juju bootstrap localhost lxd --bootstrap-constraints arch=$(ARCH) \
-#	&& multipass exec $(VM_NAME) -- juju add-model default \
-#	&& multipass exec $(VM_NAME) -- juju model-config -m default enable-os-upgrade=false
+#	&& multipass exec $(VM_NAME) -- juju add-model default --config enable-os-upgrade=false
 
 up: launch mount bootstrap ssh  ## Start a VM
 
@@ -107,6 +105,9 @@ destroy:  ## Destroy the VM
 bridge:
 	sudo route -nv add -net 192.168.64.0/24 -interface bridge100
 	# Delete if exists: sudo route -nv delete -net 192.168.64.0/24
+
+jhack-watch:  ## Trace juju charm events
+	jhack utils tail --show-defer --show-trace-ids --show-defer-id --watch
 
 # Display target comments in 'make help'
 help: ## Show this help

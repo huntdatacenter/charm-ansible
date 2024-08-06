@@ -16,6 +16,28 @@ parts:
       - hosts.ini
       - ansible.cfg
       - playbooks/storage.yaml
+      - playbooks/tls.yaml
+      - playbooks/configs.yaml
+      - files/.placeholder
+      # Open MR if you want to delist excluded collection
+      - -venv/ansible_collections/fortinet
+      - -venv/ansible_collections/cisco
+      - -venv/ansible_collections/dellemc
+      - -venv/ansible_collections/netapp
+      - -venv/ansible_collections/netapp_eseries
+      - -venv/ansible_collections/f5networks
+      - -venv/ansible_collections/azure
+      - -venv/ansible_collections/google
+      - -venv/ansible_collections/amazon
+      - -venv/ansible_collections/junipernetworks
+      - -venv/ansible_collections/vmware
+      - -venv/ansible_collections/vyos
+      - -venv/ansible_collections/purestorage
+      - -venv/ansible_collections/arista
+      - -venv/ansible_collections/ibm
+      - -venv/ansible_collections/chocolatey
+      - -venv/ansible_collections/microsoft
+      - -venv/ansible_collections/check_point
 bases:
   - build-on:
       - name: "ubuntu"

@@ -66,3 +66,203 @@ options:
       Example: '0 0 * * * root /usr/bin/true'
 
       Configure from example file: 'juju config $app_name playbook=@bundles/crontab.txt'
+
+  tls-owner:
+    type: string
+    default: "root"
+    description: |
+      Owner set to TLS path directory and files inside. Use UID number or username.
+  tls-group:
+    type: string
+    default: "root"
+    description: |
+      Group set to TLS path directory and files inside. Use GID number or groupname.
+  tls-dir-mode:
+    type: string
+    default: "0700"
+    description: |
+      Ansible mode variable for TLS directory - chmod permissions.
+  tls-mode:
+    type: string
+    default: "0600"
+    description: |
+      Ansible mode variable for TLS files - chmod permissions.
+  tls-path:
+    type: string
+    default: ""
+    description: |
+      Absoluty path to symbolic link.
+      Creates symlink to tls directory /opt/charm-ansible/<app-name>/tls which contains configured certificates.
+
+      Example: juju config app-name
+
+  tls-ca:
+    type: string
+    default: ""
+    description: |
+      TLS CA bundle (/opt/charm-ansible/<app-name>/tls/server-ca.crt).
+      Bundle example: 'include-file://tls/server-ca.crt'
+      Command example: juju config app-name tls-ca=@tls/server-ca.crt
+  tls-cert:
+    type: string
+    default: ""
+    description: |
+      TLS certificate to use for the app, can also contain CA bundle (/opt/charm-ansible/<app-name>/tls/server.crt).
+      Bundle example: 'include-file://tls/server.crt'
+      Command example: juju config app-name tls-cert=@tls/server.crt
+  tls-key:
+    type: string
+    default: ""
+    description: |
+      TLS key to use with certificate specified as tls-cert (/opt/charm-ansible/<app-name>/tls/server.key).
+      Bundle example: 'include-file://tls/server.key'
+      Command example: juju config app-name tls-key=@tls/server.key
+  tls-client:
+    type: string
+    default: ""
+    description: |
+      Client CA certificate for TLS authentication (/opt/charm-ansible/<app-name>/tls/client.crt).
+      Bundle example: 'include-file://tls/client.crt'
+      Command example: juju config app-name tls-client=@tls/client.crt
+  admin-tls-cert:
+    type: string
+    default: ""
+    description: |
+      Additional TLS certificate to use for for specific needs of application (/opt/charm-ansible/<app-name>/tls/admin.pem).
+      Bundle example: 'include-file://tls/admin.pem'
+      Command example: juju config app-name admin-tls-cert=@tls/admin.pem
+  admin-tls-key:
+    type: string
+    default: ""
+    description: |
+      Additional TLS key to use with certificate specified as admin-tls-cert (/opt/charm-ansible/<app-name>/tls/admin-key.pem).
+      Bundle example: 'include-file://tls/admin-key.pem'
+      Command example: juju config app-name admin-tls-key=@tls/admin-key.pem
+  admin-tls-client:
+    type: string
+    default: ""
+    description: |
+      Additional client CA certificate for TLS authentication (/opt/charm-ansible/<app-name>/tls/admin-client.pem).
+      Bundle example: 'include-file://tls/client.crt'
+      Command example: juju config app-name admin-tls-client=@tls/admin-client.crt
+
+  config-content:
+    type: string
+    default: ""
+    description: |
+      Custom config file contents.
+
+      Bundle example: 'include-file://files/config.conf'
+      Command example: juju config app-name config-content=@files/config.conf
+
+  config-path:
+    type: string
+    default: ""
+    description: |
+      Custom config file absolute path (required if config-content is set).
+
+      Default path: <CHARM_DIR>/files/config
+
+      Use in your ansible playbook (works only if config-path is left empty):
+
+      - name: Configure
+        ansible.builtin.copy:
+          src: files/config
+          ...
+        notify: restart service
+
+  config-owner:
+    type: string
+    default: "root"
+    description: |
+      Custom config file owner. Use UID number or username.
+  config-group:
+    type: string
+    default: "root"
+    description: |
+      Custom config file group. Use GID number or groupname.
+  config-mode:
+    type: string
+    default: "0600"
+    description: |
+      Custom config file permissions. Ansible mode variable for config file - chmod permissions.
+  config2-content:
+    type: string
+    default: ""
+    description: |
+      Custom config file contents.
+
+      Bundle example: 'include-file://files/config.conf'
+      Command example: juju config app-name config2-content=@files/config.conf
+
+  config2-path:
+    type: string
+    default: ""
+    description: |
+      Custom config file absolute path (required if config-content is set).
+
+      Default path: <CHARM_DIR>/files/config2
+
+      Use in your ansible playbook (works only if config2-path is left empty):
+
+      - name: Configure
+        ansible.builtin.copy:
+          src: files/config2
+          ...
+        notify: restart service2
+
+  config2-owner:
+    type: string
+    default: "root"
+    description: |
+      Custom config file owner. Use UID number or username.
+  config2-group:
+    type: string
+    default: "root"
+    description: |
+      Custom config file group. Use GID number or groupname.
+  config2-mode:
+    type: string
+    default: "0600"
+    description: |
+      Custom config file permissions. Ansible mode variable for config file - chmod permissions.
+  config3-content:
+    type: string
+    default: ""
+    description: |
+      Custom config file contents.
+
+      Bundle example: 'include-file://files/config.conf'
+      Command example: juju config app-name config3-content=@files/config.conf
+
+  config3-path:
+    type: string
+    default: ""
+    description: |
+      Custom config file absolute path (required if config-content is set).
+
+      Default path: <CHARM_DIR>/files/config3
+
+      Use in your ansible playbook (works only if config3-path is left empty):
+
+      - name: Configure
+        ansible.builtin.copy:
+          src: files/config3
+          ...
+        notify: restart service3
+
+  config3-owner:
+    type: string
+    default: "root"
+    description: |
+      Custom config file owner. Use UID number or username.
+  config3-group:
+    type: string
+    default: "root"
+    description: |
+      Custom config file group. Use GID number or groupname.
+  config3-mode:
+    type: string
+    default: "0600"
+    description: |
+      Custom config file permissions. Ansible mode variable for config file - chmod permissions.
