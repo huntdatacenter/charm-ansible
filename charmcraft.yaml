@@ -38,6 +38,8 @@ parts:
       - -venv/ansible_collections/chocolatey
       - -venv/ansible_collections/microsoft
       - -venv/ansible_collections/check_point
+      - -*/**/*.exe
+      - -*/**/__pycache__/
 bases:
   - build-on:
       - name: "ubuntu"
