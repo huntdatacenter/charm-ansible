@@ -40,12 +40,21 @@ juju list-actions "${app_name}"
 
 ## Storage
 
+List storage pools
+```bash
+juju list-storage-pools -m $model
+```
+
 Test adding storage
 
-```
+```bash
+unit_name=
+pool=tmpfs  # lxd
 size=2G
-juju add-storage "${unit_name}" "data=${size}"
+juju add-storage -m $model "${unit_name}" "data=${pool},${size}"
 ```
+
+Use config to set mode, owner, and group for the storage directory.
 
 ## Development
 

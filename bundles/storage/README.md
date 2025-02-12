@@ -60,7 +60,7 @@ ok: [localhost] => {
         "playbook": "- hosts: localhost\n  connection: local\n  become: true\n  gather_facts: false\n\n  tasks:\n    - name: Run apt update\n      ansible.builtin.apt:\n        update_cache: true\n      become: true\n      tags:\n        - never\n        - install\n        - start\n\n    - name: Print all available facts\n      ansible.builtin.debug:\n        var: ansible_facts\n      ignore_errors: true\n      tags:\n        - never\n        - install\n        - debug\n\n    - name: Print all extra vars\n      ansible.builtin.debug:\n        var: hostvars[inventory_hostname]\n      ignore_errors: true\n      tags:\n        - never\n        - install\n        - debug\n\n    # - name: Install cmatrix\n    #   ansible.builtin.apt:\n    #     name:\n    #       - \"cmatrix\"\n    #   become: true\n    #   tags:\n    #     - never\n    #     - install\n    #     - start\n\n    # - name: Remove cmatrix\n    #   ansible.builtin.apt:\n    #     name:\n    #       - \"cmatrix\"\n    #     state: absent\n    #   become: true\n    #   tags:\n    #     - never\n    #     - stop\n",
         "playbook_dir": "/var/lib/juju/agents/unit-ubuntu-storage-0/charm",
         "storage_bind_mount": "/opt/charm-ansible/ubuntu-storage/storage",
-        "storage_mount": "",
+        "mount_path": "",
         "storage_volume": "/var/lib/juju/storage/data/1",
         "storages": {
             "data": "/var/lib/juju/storage/data/1"

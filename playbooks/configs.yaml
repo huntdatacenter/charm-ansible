@@ -1,0 +1,36 @@
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Config file
+      ansible.builtin.copy:
+        content: "{{ item.content }}"
+        dest: "{{ item.dest }}"
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+        mode: "{{ item.mode }}"
+      diff: false
+      # no_log: true
+      loop:
+        - dest: "{{ config_path | default(lookup('ansible.builtin.env', 'JUJU_CHARM_DIR') + '/files/config', true) }}"
+          content: "{{ config_content | default('') | string }}"
+          owner: "{{ config_owner | default('root', true) }}"
+          group: "{{ config_group | default('root', true) }}"
+          mode: "{{ config_mode | default('0700', true) }}"
+        - dest: "{{ config2_path | default(lookup('ansible.builtin.env', 'JUJU_CHARM_DIR') + '/files/config2', true) }}"
+          content: "{{ config2_content | default('') | string }}"
+          owner: "{{ config2_owner | default('root', true) }}"
+          group: "{{ config2_group | default('root', true) }}"
+          mode: "{{ config2_mode | default('0700', true) }}"
+        - dest: "{{ config3_path | default(lookup('ansible.builtin.env', 'JUJU_CHARM_DIR') + '/files/config3', true) }}"
+          content: "{{ config3_content | default('') | string }}"
+          owner: "{{ config3_owner | default('root', true) }}"
+          group: "{{ config3_group | default('root', true) }}"
+          mode: "{{ config3_mode | default('0700', true) }}"
+      when: (item.dest | default('', true) | trim | length > 0) or (lookup('ansible.builtin.env', 'JUJU_CHARM_DIR', default='') | length > 0)
+      tags:
+        - never
+        - install
+        - config

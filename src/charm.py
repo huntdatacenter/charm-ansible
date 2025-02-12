@@ -13,10 +13,11 @@ develop a new k8s charm using the Operator Framework:
 """
 
 import json
-import os  # noqa
-import subprocess  # noqa
+import os
+import sys
+# import subprocess  # noqa: F401
 import logging
-# from yaml import safe_load
+# from yaml import safe_load  # noqa: F401
 from pathlib import Path
 
 from ops.charm import CharmBase
@@ -43,8 +44,11 @@ except Exception as e:
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-INTERFACE = "juju-info"
+# stream_handler = logging.StreamHandler(stream=sys.stderr)
+# stream_handler.setLevel(logging.INFO)
+# logger.addHandler(stream_handler)
 
 
 class AnsibleCharm(CharmBase):
@@ -69,22 +73,62 @@ class AnsibleCharm(CharmBase):
         self._stored.set_default(storage_name="data")
         self._stored.set_default(crontab="")
 
+    @property
+    def verbosity(self):
+        """
+        Verbosity setting in range <0 - 6>
+        """
+        verbosity = self.model.config['verbosity'] if self.model.config['verbosity'] > 0 else 0
+        return 6 if verbosity > 6 else verbosity
+
     def _on_config_changed(self, event):
         self.__update_ansible_playbook()
 
         try:
             ansible_manager.init_charm(self)
         except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
             logger.error("Init Ansible extension failed: {}".format(str(e)))
 
         try:
             extra_vars = self.__get_extra_vars()
         except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
             logger.error("Failed to fetch extra vars: {}".format(str(e)))
         try:
             env = self.__get_environ()
         except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
             logger.error("Failed to fetch environment variables: {}".format(str(e)))
+
+        try:
+            ansible_manager.apply_playbook(
+                playbook='playbooks/tls.yaml',
+                tags=["config"],
+                extra_vars=extra_vars,
+                env=env,
+                verbosity=self.verbosity,
+            )
+        except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
+            logger.error("Ansible TLS playbook failed: {}".format(str(e)))
+
+        try:
+            ansible_manager.apply_playbook(
+                playbook='playbooks/configs.yaml',
+                tags=["config"],
+                extra_vars=extra_vars,
+                env=env,
+                verbosity=self.verbosity,
+            )
+        except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
+            logger.error("Ansible configs playbook failed: {}".format(str(e)))
 
         try:
             ansible_manager.apply_playbook(
@@ -92,15 +136,19 @@ class AnsibleCharm(CharmBase):
                 tags=["config"],
                 extra_vars=extra_vars,
                 env=env,
+                verbosity=self.verbosity,
             )
         except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
             logger.error("Ansible playbook failed: {}".format(str(e)))
 
+        self._stored.crontab = self.model.config['crontab']
+        self.__update_crontab(self._stored.crontab, self.app.name)
+
+    def __update_crontab(self, cron_content, app_name):
         # /etc/cron.d/charm_<app_name>
         try:
-            self._stored.crontab = self.model.config['crontab']
-            cron_content = self._stored.crontab
-            app_name = self.app.name
             cronfile_path = os.path.join("/etc/cron.d", f"charm_{app_name.replace('-', '_')}")
             file_path = Path(cronfile_path)
             file_exists = file_path.exists()
@@ -130,15 +178,10 @@ class AnsibleCharm(CharmBase):
         }
 
         try:
-            extra_vars['ingress_address'] = self.ingress_address
-        except Exception as e:
-            logger.error("Failed to fetch ingress IP address: {}".format(str(e)))
-
-        try:
             storages = dict(self._stored.storages)
             extra_vars['storages'] = storages
-            if self.model.config['storage_mount']:
-                storage_bind_mount = self.model.config['storage_mount']
+            if self.model.config['mount_path']:
+                storage_bind_mount = self.model.config['mount_path']
             else:
                 storage_bind_mount = os.path.join("/opt/charm-ansible", self.app.name, "storage")
             if storages:
@@ -208,10 +251,37 @@ class AnsibleCharm(CharmBase):
 
         try:
             ansible_manager.apply_playbook(
+                playbook='playbooks/tls.yaml',
+                tags=["install"],
+                extra_vars=extra_vars,
+                env=env,
+                verbosity=self.verbosity,
+            )
+        except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
+            logger.error("Ansible TLS playbook failed: {}".format(str(e)))
+
+        try:
+            ansible_manager.apply_playbook(
+                playbook='playbooks/configs.yaml',
+                tags=["config"],
+                extra_vars=extra_vars,
+                env=env,
+                verbosity=self.verbosity,
+            )
+        except Exception as e:
+            if self.model.config['debug']:
+                logger.warning(e, exc_info=True)
+            logger.error("Ansible configs playbook failed: {}".format(str(e)))
+
+        try:
+            ansible_manager.apply_playbook(
                 playbook='playbook.yaml',
                 tags=["install"],
                 extra_vars=extra_vars,
                 env=env,
+                verbosity=self.verbosity,
             )
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format(str(e)))
@@ -240,6 +310,7 @@ class AnsibleCharm(CharmBase):
                 tags=["start"],
                 extra_vars=extra_vars,
                 env=env,
+                verbosity=self.verbosity,
             )
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format(str(e)))
@@ -262,6 +333,7 @@ class AnsibleCharm(CharmBase):
                 tags=["stop"],
                 extra_vars=extra_vars,
                 env=env,
+                verbosity=self.verbosity,
             )
         except Exception as e:
             logger.error("Ansible playbook failed: {}".format(str(e)))
@@ -277,12 +349,6 @@ class AnsibleCharm(CharmBase):
             logger.error("Failed to read the ansible version: {}".format(str(e)))
             version = '0.0.1'
         return version
-
-    @property
-    def ingress_address(self):
-        """The ingress-address of the swarm cluster
-        """
-        return str(self.model.get_binding(INTERFACE).network.ingress_address)
 
     def _on_ansible_playbook_action(self, event):
         """
@@ -415,6 +481,7 @@ class AnsibleCharm(CharmBase):
                     diff=True,
                     check=False,
                     throw=True,
+                    verbosity=self.verbosity,
                 )
             except Exception as e:
                 logger.error(e)
@@ -442,6 +509,7 @@ class AnsibleCharm(CharmBase):
                 diff=True,
                 check=False,
                 throw=True,
+                verbosity=self.verbosity,
             )
         except Exception as e:
             logger.error(e)

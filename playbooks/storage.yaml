@@ -8,7 +8,9 @@
       ansible.builtin.file:
         path: "{{ storage_bind_mount }}"
         state: directory
-        mode: '0755'
+        mode: "0700"
+      when:
+        - storage_bind_mount is defined and storage_bind_mount
       tags:
         - never
         - mount
@@ -22,6 +24,19 @@
         fstype: none
       when:
         - storage_volume is defined and storage_volume
+        - storage_bind_mount is defined and storage_bind_mount
+      tags:
+        - never
+        - mount
+
+    - name: Set owner
+      ansible.builtin.file:
+        path: "{{ storage_bind_mount }}"
+        state: directory
+        mode: "{{ mount_mode | default('0700', true) }}"
+        owner: "{{ mount_owner | default('root', true) }}"
+        group: "{{ mount_group | default('root', true) }}"
+      when:
         - storage_bind_mount is defined and storage_bind_mount
       tags:
         - never
