@@ -254,7 +254,7 @@ class AnsiblePlaybook:
         from ansible.playbook import Playbook
 
         if self.model and hasattr(self.model, 'config'):
-            model_config = dict(deepcopy(self.model.config))
+            model_config = dict(deepcopy(dict(self.model.config)))
             model_config['app_name'] = self.app_name
         else:
             model_config = {}
